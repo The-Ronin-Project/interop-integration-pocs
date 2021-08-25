@@ -7,12 +7,12 @@
  */
 
 plugins {
-    // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.4.31"
-
-    // Apply the java-library plugin for API and implementation separation.
-    `java-library`
+    kotlin("jvm") version "1.5.21"
 }
+
+group = "com.example"
+version = "0.0.1-SNAPSHOT"
+java.sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
     // Use Maven Central for resolving dependencies.
@@ -23,22 +23,31 @@ dependencies {
     // Align versions of all Kotlin components
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
 
-    // Use the Kotlin JDK 8 standard library.
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation("com.google.guava:guava:30.1-jre")
 
-    // Use the Kotlin test library.
+    implementation("ca.uhn.hapi.fhir:hapi-fhir-structures-r4:5.4.1")
+
+    implementation("ca.uhn.hapi:hapi-structures-v281:2.3")
+
+    implementation("org.liquibase:liquibase-core:4.4.3")
+
+    testImplementation("org.testcontainers:junit-jupiter:1.16.0")
+    testImplementation("org.testcontainers:postgresql:1.16.0")
+    testRuntimeOnly("org.postgresql:postgresql:42.2.18")
+    testImplementation("org.ktorm:ktorm-core:3.4.1")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testRuntimeOnly("org.yaml:snakeyaml:1.29")
+    testImplementation("com.github.database-rider:rider-junit5:1.29.0")
+}
 
-    // Use the Kotlin JUnit integration.
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
+tasks.test {
+    useJUnitPlatform()
+}
 
-    // This dependency is exported to consumers, that is to say found on their compile classpath.
-    api("org.apache.commons:commons-math3:3.6.1")
-
-    api("ca.uhn.hapi.fhir:hapi-fhir-structures-r4:5.4.1")
-
-    api("ca.uhn.hapi:hapi-structures-v281:2.3")
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs = listOf("-Xjsr305=strict")
+        jvmTarget = "11"
+    }
 }

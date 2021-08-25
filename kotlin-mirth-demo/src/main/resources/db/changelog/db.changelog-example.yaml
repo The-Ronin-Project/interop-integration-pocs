@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-example-table
+      author: Josh Smith
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: example
+      changes:
+        - createTable:
+            tableName: example
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_example
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(250)
