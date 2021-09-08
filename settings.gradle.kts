@@ -8,4 +8,5 @@
  */
 
 rootProject.name = "integration-pocs"
+include("graphql-demo")
 include("kotlin-mirth-demo")

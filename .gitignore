@@ -5,6 +5,7 @@
 target/
 id_file
 .idea
+data
 
 # Ignore Gradle project-specific cache directory
 .gradle

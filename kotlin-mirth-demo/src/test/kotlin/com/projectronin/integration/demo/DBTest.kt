@@ -60,6 +60,8 @@ class DBTest {
 
     @Test
     fun example() {
+        println(DBTest::class.java.getResource("/dbunit.yml")?.path)
+
         val ktormDatabase =
             Database.connect(postgreSQL.jdbcUrl, user = postgreSQL.username, password = postgreSQL.password)
 
