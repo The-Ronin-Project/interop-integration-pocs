@@ -6,7 +6,7 @@ on:
         description: 'Branch to releas'
         type: string
         required: true
-        default: 'main'
+        default: 'mai'
       version:
         description: 'Specific version to release as. Leave unset if discoverable'
         type: string
