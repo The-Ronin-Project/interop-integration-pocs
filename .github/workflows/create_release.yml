@@ -38,6 +38,7 @@ jobs:
         id: get-version
         run: |
           if [ ${{ github.event.inputs.version }} ]
+          then
              version=${{ github.event.inputs.version }}
           else 
              version=$(./gradlew currentVersion | awk '{ if(/Project version:/) { print $3; exit } }' | cut -d\- -f1)
