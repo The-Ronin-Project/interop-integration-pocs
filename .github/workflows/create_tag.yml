@@ -30,7 +30,7 @@ jobs:
       - name: Execute build
         run: ./gradlew build
 
-      - name: Release
+      - name: Axion Release
         id: release
         run: |
           ./gradlew release -Prelease.customUsername=${{ github.actor }} -Prelease.customPassword=${{ github.token }}
