@@ -16,7 +16,7 @@ repositories {
     maven(url = "https://plugins.gradle.org/m2/")
 }
 
-subprojects {
+allprojects {
     apply(plugin = "java")
     apply(plugin = "jacoco")
     apply(plugin = "maven-publish")
