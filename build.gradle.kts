@@ -41,7 +41,8 @@ allprojects {
             closureOf<pl.allegro.tech.build.axion.release.domain.TagNameSerializationConfig> {
                 initialVersion =
                     org.gradle.kotlin.dsl.KotlinClosure2<pl.allegro.tech.build.axion.release.domain.properties.TagProperties, pl.allegro.tech.build.axion.release.domain.scm.ScmPosition, String>(
-                        { _, _ -> "1.0.0" })
+                        { _, _ -> "1.0.0" }
+                    )
                 prefix = ""
             }
         )
