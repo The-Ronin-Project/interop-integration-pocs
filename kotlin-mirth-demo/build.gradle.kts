@@ -6,22 +6,9 @@
  * User Manual available at https://docs.gradle.org/7.1.1/userguide/building_java_projects.html
  */
 
-plugins {
-    kotlin("jvm") version "1.5.21"
-}
-
-group = "com.example"
-version = "0.0.1-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_11
-
-repositories {
-    // Use Maven Central for resolving dependencies.
-    mavenCentral()
-}
-
 dependencies {
     // Align versions of all Kotlin components
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.6.10"))
 
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation("com.google.guava:guava:30.1-jre")
@@ -41,13 +28,29 @@ dependencies {
     testImplementation("com.github.database-rider:rider-junit5:1.29.0")
 }
 
-tasks.test {
-    useJUnitPlatform()
+// Publishing
+publishing {
+    repositories {
+        maven {
+            name = "nexus"
+            credentials {
+                username = System.getenv("NEXUS_USER")
+                password = System.getenv("NEXUS_TOKEN")
+            }
+            url = if (project.version.toString().endsWith("SNAPSHOT")) {
+                uri("https://repo.devops.projectronin.io/repository/maven-snapshots/")
+            } else {
+                uri("https://repo.devops.projectronin.io/repository/maven-releases/")
+            }
+        }
+    }
+    publications {
+        create<MavenPublication>("library") {
+            from(components["java"])
+        }
+    }
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "11"
-    }
+tasks.register("install") {
+    dependsOn(tasks.publishToMavenLocal)
 }
