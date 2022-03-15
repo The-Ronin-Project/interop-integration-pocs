@@ -43,7 +43,7 @@ jobs:
           else 
              version=$(./gradlew currentVersion | awk '{ if(/Project version:/) { print $3; exit } }' | cut -d\- -f1)
           fi
-          echo "::set-output name=version::version"
+          echo "::set-output name=version::$version"
 
       - name: Axion Release
         id: release
