@@ -34,6 +34,12 @@ jobs:
       - name: Execute build
         run: ./gradlew build
 
+      - name: Get Previous Tag
+        id: previous-tag
+        run: |
+          PREV_TAG=$(git describe --abbrev=0 --tags)
+          echo "::set-output name=baseRef::$PREV_TAG"
+
       - name: Get version
         id: get-version
         run: |
@@ -54,7 +60,7 @@ jobs:
              -Prelease.customPassword=${{ github.token }}
     outputs:
       tag: ${{ steps.get-version.outputs.version }}
-      previousVersion: ${{ steps.get-previous-version.outputs.previous }}
+      previousTag: ${{ steps.previous-tag.outputs.baseRef }}
 
   release:
     runs-on: self-hosted
@@ -78,20 +84,14 @@ jobs:
           NEXUS_USER: ${{ secrets.NEXUS_MAVEN_USER }}
           NEXUS_TOKEN: ${{ secrets.NEXUS_MAVEN_TOKEN }}
 
-      - name: Get Previous Tag
-        id: previous-tag
-        run: |
-          PREV_TAG=$(git describe --abbrev=0 --tags "refs/tags/${{ needs.tag.outputs.tag }}^")
-          echo "::set-output name=baseRef::$PREV_TAG"
-
       - name: Generate Release Notes
         id: release-notes
         uses: nblagoev/pull-release-notes-action@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          base-ref: ${{ steps.previous-tag.outputs.baseRef }}
-          head-ref: "refs/tags/${{ needs.tag.outputs.tag }}"
+          base-ref: ${{ needs.tag.outputs.previousTag }}
+          head-ref: ${{ needs.tag.outputs.tag }}
 
       - name: Generate Release
         uses: ncipollo/release-action@v1
