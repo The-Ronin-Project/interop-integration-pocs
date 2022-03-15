@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to release'
+        description: 'Branch to releas'
         type: string
         required: true
         default: 'main'
