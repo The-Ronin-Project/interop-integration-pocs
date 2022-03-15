@@ -3,10 +3,10 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to releas'
+        description: 'Branch to release'
         type: string
         required: true
-        default: 'mai'
+        default: 'main'
       version:
         description: 'Specific version to release as. Leave unset if discoverable'
         type: string
