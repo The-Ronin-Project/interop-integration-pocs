@@ -1,15 +1,28 @@
-name: Create Release
+name: Create Tag
 on:
-  create:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to tag'
+        type: string
+        required: true
+        default: 'main'
+      version:
+        description: 'Specific version to release as. Leave unset if discoverable'
+        type: string
+        required: false
 
 env:
   ronin.release: true
 
 jobs:
-  build:
+  tag:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.branch }}
       - name: Set up JDK 11
         uses: actions/setup-java@v2
         with:
@@ -21,6 +34,42 @@ jobs:
       - name: Execute build
         run: ./gradlew build
 
+      - name: Get version
+        id: get-version
+        run: |
+          if [ ${{ github.event.inputs.version }} ]
+             version=${{ github.event.inputs.version }}
+          else 
+             version=$(./gradlew currentVersion | awk '{ if(/Project version:/) { print $3; exit } }' | cut -d\- -f1)
+          fi
+          echo "::set-output name=version::version"
+
+      - name: Axion Release
+        id: release
+        run: |
+          ./gradlew release \
+             -Prelease.forceVersion=${{ steps.get-version.outputs.version }} \
+             -Prelease.customUsername=${{ github.actor }} \
+             -Prelease.customPassword=${{ github.token }}
+    outputs:
+      tag: ${{ steps.get-version.outputs.version }}
+
+  release:
+    runs-on: self-hosted
+    needs: tag
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: "refs/tags/${{ needs.tag.outputs.tag }}"
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: 11
+          distribution: 'zulu'
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+        
       - name: Publish
         run: ./gradlew publish
         env:
