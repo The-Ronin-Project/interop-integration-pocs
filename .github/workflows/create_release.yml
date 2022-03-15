@@ -84,19 +84,14 @@ jobs:
           NEXUS_USER: ${{ secrets.NEXUS_MAVEN_USER }}
           NEXUS_TOKEN: ${{ secrets.NEXUS_MAVEN_TOKEN }}
 
-      - name: Generate Release Notes
-        id: release-notes
-        uses: nblagoev/pull-release-notes-action@v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          base-ref: ${{ needs.tag.outputs.previousTag }}
-          head-ref: ${{ needs.tag.outputs.tag }}
+      - name: Generate Changelog
+        id: changelog
+        uses: Bullrich/generate-release-changelog@2.0.0
 
       - name: Generate Release
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ needs.tag.outputs.tag }}
-          body: ${{ steps.release-notes.outputs.result }}
+          body: ${{ steps.changelog.outputs.changelog }}
           artifacts: "**/build/libs/*.jar"
