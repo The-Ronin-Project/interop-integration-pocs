@@ -39,17 +39,11 @@ jobs:
         run: |
           if [ ${{ github.event.inputs.version }} ]
           then
-             version=${{ github.event.inputs.version }}
+             VERSION=${{ github.event.inputs.version }}
           else 
-             version=$(./gradlew currentVersion | awk '{ if(/Project version:/) { print $3; exit } }' | cut -d\- -f1)
+             VERSION=$(./gradlew currentVersion | awk '{ if(/Project version:/) { print $3; exit } }' | cut -d\- -f1)
           fi
-          echo "::set-output name=version::$version"
-
-      - name: Get previous version
-        id: get-previous-version
-        run: |
-          previous=$(./gradlew previousVersion | awk '{ if(/Previous version:/) { print $3; exit } }' | cut -d\- -f1)
-          echo "::set-output name=previous::$previous"
+          echo "::set-output name=version::$VERSION"
 
       - name: Axion Release
         id: release
@@ -84,18 +78,25 @@ jobs:
           NEXUS_USER: ${{ secrets.NEXUS_MAVEN_USER }}
           NEXUS_TOKEN: ${{ secrets.NEXUS_MAVEN_TOKEN }}
 
+      - name: Get Previous Tag
+        id: previous-tag
+        run: |
+          PREV_TAG=$(git describe --abbrev=0 --tags "${{ github.ref }}^")
+          echo "::set-output name=baseRef::$PREV_TAG"
+
       - name: Generate Release Notes
         id: release-notes
-        uses: Fresa/release-notes-generator@v0.2.2
+        uses: nblagoev/pull-release-notes-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          version: ${{ needs.tag.outputs.tag }}
-          from_ref_exclusive: ${{ needs.tag.outputs.previousVersion }}
-          to_ref_inclusive: ${{ needs.tag.outputs.tag }}
+          base-ref: ${{ steps.previous-tag.outputs.baseRef }}
+          head-ref: ${{ github.ref }}
 
       - name: Generate Release
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ needs.tag.outputs.tag }}
-          body: ${{ steps.release-notes.outputs.release_notes }}
+          body: ${{ steps.release-notes.outputs.result }}
           artifacts: "**/build/libs/*.jar"
