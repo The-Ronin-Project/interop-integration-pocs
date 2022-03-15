@@ -81,7 +81,7 @@ jobs:
       - name: Get Previous Tag
         id: previous-tag
         run: |
-          PREV_TAG=$(git describe --abbrev=0 --tags "ref/tags/${{ needs.tag.outputs.tag }}^")
+          PREV_TAG=$(git describe --abbrev=0 --tags "refs/tags/${{ needs.tag.outputs.tag }}^")
           echo "::set-output name=baseRef::$PREV_TAG"
 
       - name: Generate Release Notes
@@ -91,7 +91,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           base-ref: ${{ steps.previous-tag.outputs.baseRef }}
-          head-ref: "ref/tags/${{ needs.tag.outputs.tag }}"
+          head-ref: "refs/tags/${{ needs.tag.outputs.tag }}"
 
       - name: Generate Release
         uses: ncipollo/release-action@v1
