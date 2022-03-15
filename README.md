@@ -6,5 +6,3 @@ Contains various expirements with utilizing Apache Camel for receiving and proce
 
 ## mirth-demo
 Contains Java classes that could be utilized by Mirth/NextGen Connect for handling HL7 messages.
-
-## Testing
