@@ -17,6 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
+          fetch-depth: 0
           ref: ${{ github.event.inputs.branch }}
       - name: Set up JDK 11
         uses: actions/setup-java@v2
@@ -29,12 +30,7 @@ jobs:
       - name: Execute build
         run: ./gradlew build
 
-      - name: Get version
-        id: get-tag
+      - name: Release
+        id: release
         run: |
-          tag=$(./gradlew currentVersion | awk '{ if(/Project version:/) { print $3; exit } }' | cut -d\- -f1)
-          echo "::set-output name=tag::$tag"
-      - name: Create tag
-        uses: rickstaa/action-create-tag@v1.2.2
-        with:
-          tag: ${{ steps.get-tag.outputs.tag }}
+          ./gradlew release -Prelease.customUsername=${{ github.actor }} -Prelease.customPassword=${{ github.token }}
