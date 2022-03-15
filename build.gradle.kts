@@ -64,6 +64,10 @@ allprojects {
             })
     }
 
+    tasks.register("previousVersion") {
+        logger.lifecycle("Previous version: ${scmVersion.previousVersion}")
+    }
+
     project.version = scmVersion.version
 
     repositories {

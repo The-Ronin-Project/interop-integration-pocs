@@ -45,6 +45,12 @@ jobs:
           fi
           echo "::set-output name=version::$version"
 
+      - name: Get previous version
+        id: get-previous-version
+        run: |
+          previous=$(./gradlew previousVersion | awk '{ if(/Previous version:/) { print $3; exit } }' | cut -d\- -f1)
+          echo "::set-output name=previous::$previous"
+
       - name: Axion Release
         id: release
         run: |
@@ -54,6 +60,7 @@ jobs:
              -Prelease.customPassword=${{ github.token }}
     outputs:
       tag: ${{ steps.get-version.outputs.version }}
+      previousVersion: ${{ steps.get-previous-version.outputs.previous }}
 
   release:
     runs-on: self-hosted
@@ -77,10 +84,18 @@ jobs:
           NEXUS_USER: ${{ secrets.NEXUS_MAVEN_USER }}
           NEXUS_TOKEN: ${{ secrets.NEXUS_MAVEN_TOKEN }}
 
+      - name: Generate Release Notes
+        id: release-notes
+        uses: Fresa/release-notes-generator@v0.2.2
+        with:
+          version: ${{ needs.tag.outputs.tag }}
+          from_ref_exclusive: ${{ needs.tag.outputs.previousVersion }}
+          to_ref_inclusive: ${{ needs.tag.outputs.tag }}
+
       - name: Generate Release
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ needs.tag.outputs.tag }}
-          generateReleaseNotes: true
+          body: ${{ steps.release-notes.outputs.release_notes }}
           artifacts: "**/build/libs/*.jar"
