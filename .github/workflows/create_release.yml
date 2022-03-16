@@ -85,11 +85,13 @@ jobs:
       #          NEXUS_USER: ${{ secrets.NEXUS_MAVEN_USER }}
       #          NEXUS_TOKEN: ${{ secrets.NEXUS_MAVEN_TOKEN }}
 
-      - name: Generate Changelog
-        id: changelog
-        uses: Bullrich/generate-release-changelog@2.0.0
-        env:
-          REPO: ${{ github.repository }}
+      - name: Generate Release Notes
+        id: release-notes
+        uses: Fresa/release-notes-generator@v0.2.2
+        with:
+          version: ${{ needs.tag.outputs.tag }}
+          from_ref_exclusive: ${{ needs.tag.outputs.previousTag }}
+          to_ref_inclusive: ${{ needs.tag.outputs.tag }}
 
       - name: Generate Release
         uses: ncipollo/release-action@v1
