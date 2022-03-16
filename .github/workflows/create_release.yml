@@ -1,18 +1,16 @@
 name: Create Release
 on:
-  push:
-    branches: [ master ]
-#  workflow_dispatch:
-#    inputs:
-#      branch:
-#        description: 'Branch to release'
-#        type: string
-#        required: true
-#        default: 'main'
-#      version:
-#        description: 'Specific version to release as. Leave unset if discoverable'
-#        type: string
-#        required: false
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to release'
+        type: string
+        required: true
+        default: 'main'
+      version:
+        description: 'Specific version to release as. Leave unset if discoverable'
+        type: string
+        required: false
 
 env:
   ronin.release: true
