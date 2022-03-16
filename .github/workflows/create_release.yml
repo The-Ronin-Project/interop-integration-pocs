@@ -68,6 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
+          fetch-depth: 0
           ref: "refs/tags/${{ needs.tag.outputs.tag }}"
 
       - name: Set up JDK 11
@@ -87,9 +88,6 @@ jobs:
       - name: Generate Changelog
         id: changelog
         uses: gandarez/changelog-action@v1.0.4
-        with:
-          previous_tag: ${{ needs.tag.outputs.previousTag }}
-          current_tag: ${{ needs.tag.outputs.tag }}
 
       - name: Generate Release
         uses: ncipollo/release-action@v1
