@@ -84,9 +84,7 @@ jobs:
 
       - name: Generate Changelog
         id: changelog
-        uses: Bullrich/generate-release-changelog@2.0.0
-        env:
-          REPO: ${{ github.repository }}
+        uses: gandarez/changelog-action@v1.0.4
 
       - name: Generate Release
         uses: ncipollo/release-action@v1
