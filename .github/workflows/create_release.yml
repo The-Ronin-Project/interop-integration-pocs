@@ -78,11 +78,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Publish
-        run: ./gradlew publish
-        env:
-          NEXUS_USER: ${{ secrets.NEXUS_MAVEN_USER }}
-          NEXUS_TOKEN: ${{ secrets.NEXUS_MAVEN_TOKEN }}
+      #      - name: Publish
+      #        run: ./gradlew publish
+      #        env:
+      #          NEXUS_USER: ${{ secrets.NEXUS_MAVEN_USER }}
+      #          NEXUS_TOKEN: ${{ secrets.NEXUS_MAVEN_TOKEN }}
 
       - name: Generate Changelog
         id: changelog
