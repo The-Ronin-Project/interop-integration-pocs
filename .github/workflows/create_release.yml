@@ -87,6 +87,8 @@ jobs:
       - name: Generate Changelog
         id: changelog
         uses: Bullrich/generate-release-changelog@2.0.0
+        env:
+          REPO: ${{ github.repository }}
 
       - name: Generate Release
         uses: ncipollo/release-action@v1
