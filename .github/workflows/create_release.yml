@@ -78,6 +78,10 @@ jobs:
       #          NEXUS_USER: ${{ secrets.NEXUS_MAVEN_USER }}
       #          NEXUS_TOKEN: ${{ secrets.NEXUS_MAVEN_TOKEN }}
 
+      # Just to ensure the JAR gets built until the publish is enabled.
+      - name: Execute build
+        run: ./gradlew build
+
       - name: Generate Changelog
         id: changelog
         uses: Bullrich/generate-release-changelog@2.0.0
