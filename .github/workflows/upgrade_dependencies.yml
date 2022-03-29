@@ -29,3 +29,4 @@ jobs:
           gitUserEmail: "41898282+github-actions[bot]@users.noreply.github.com"
           gitUserName: "github-actions[bot]"
           pullRequestsMax: ${{ github.event.inputs.maxPRs || '5' }}
+          baseBranch: main
