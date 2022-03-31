@@ -6,6 +6,7 @@ target/
 id_file
 .idea
 data
+codecov/
 
 # Ignore Gradle project-specific cache directory
 .gradle
