@@ -30,3 +30,5 @@ jobs:
           gitUserName: "github-actions[bot]"
           pullRequestsMax: ${{ github.event.inputs.maxPRs || '5' }}
           baseBranch: main
+          pullRequestLabels: "dependencies"
+          pullRequestAssignee: "arssycro"
