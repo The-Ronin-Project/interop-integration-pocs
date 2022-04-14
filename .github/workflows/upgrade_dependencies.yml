@@ -31,4 +31,4 @@ jobs:
           pullRequestsMax: ${{ github.event.inputs.maxPRs || '5' }}
           baseBranch: main
           pullRequestLabels: "dependencies"
-          pullRequestAssignee: "interops"
+          pullRequestAssignee: "projectronin/interops"
