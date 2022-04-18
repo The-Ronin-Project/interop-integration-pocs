@@ -84,7 +84,7 @@ jobs:
 
       - name: Generate Changelog
         id: changelog
-        uses: gandarez/changelog-action@v1.0.4
+        uses: gandarez/changelog-action@v1.2.0
 
       - name: Generate Release
         uses: ncipollo/release-action@v1
