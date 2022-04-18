@@ -11,6 +11,11 @@ on:
         description: 'Specific version to release as. Leave unset if discoverable'
         type: string
         required: false
+      skip_publish:
+        description: `Indicates that publishing should be skipped. This should only be used for cases where the release notes were not properly generated but the artifacts were published.`
+        type: boolean
+        required: false
+        default: false
 
 env:
   ronin.release: true
@@ -32,6 +37,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Execute build
+        if: false == ${{ github.event.inputs.skip_publish }}
         run: ./gradlew build
 
       - name: Get version
@@ -47,6 +53,7 @@ jobs:
 
       - name: Axion Release
         id: release
+        if: false == ${{ github.event.inputs.skip_publish }}
         run: |
           ./gradlew release \
              -Prelease.forceVersion=${{ steps.get-version.outputs.version }} \
@@ -80,6 +87,7 @@ jobs:
 
       # Just to ensure the JAR gets built until the publish is enabled.
       - name: Execute build
+        if: false == ${{ github.event.inputs.skip_publish }}
         run: ./gradlew build
 
       - name: Generate Changelog
