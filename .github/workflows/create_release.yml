@@ -12,7 +12,7 @@ on:
         type: string
         required: false
       skip_publish:
-        description: `Indicates that publishing should be skipped. This should only be used for cases where the release notes were not properly generated but the artifacts were published.`
+        description: 'Indicates that publishing should be skipped. This should only be used for cases where the release notes were not properly generated but the artifacts were published.'
         type: boolean
         required: false
         default: false
