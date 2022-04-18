@@ -1,21 +1,15 @@
 package com.projectronin.integration.demo
 
-import com.github.database.rider.core.api.configuration.DBUnit
 import com.github.database.rider.core.api.connection.ConnectionHolder
 import com.github.database.rider.core.api.dataset.DataSet
-import com.github.database.rider.junit5.DBUnitExtension
 import com.github.database.rider.junit5.api.DBRider
 import liquibase.Contexts
 import liquibase.Liquibase
 import liquibase.database.DatabaseFactory
 import liquibase.database.jvm.JdbcConnection
 import liquibase.resource.ClassLoaderResourceAccessor
-import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.ktorm.database.Database
 import org.ktorm.dsl.from
 import org.ktorm.dsl.insert
@@ -28,7 +22,7 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.sql.Connection
 import java.sql.DriverManager
-import java.util.*
+import java.util.Properties
 
 @Testcontainers
 @DBRider
@@ -38,7 +32,7 @@ class DBTest {
         @Container
         private val postgreSQL = PostgreSQLContainer<Nothing>("postgres:latest")
 
-        lateinit private var connection : Connection
+        private lateinit var connection: Connection
 
         @JvmStatic
         @BeforeAll

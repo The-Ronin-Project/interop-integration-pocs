@@ -6,7 +6,6 @@ import ca.uhn.hl7v2.model.GenericSegment
 import ca.uhn.hl7v2.model.Message
 import ca.uhn.hl7v2.model.Varies
 import ca.uhn.hl7v2.model.v281.datatype.CX
-import ca.uhn.hl7v2.model.v281.datatype.DTM
 import ca.uhn.hl7v2.model.v281.datatype.XPN
 import ca.uhn.hl7v2.model.v281.message.ADT_A01
 import ca.uhn.hl7v2.model.v281.segment.MSH
@@ -17,7 +16,6 @@ import ca.uhn.hl7v2.validation.impl.ValidationContextFactory
 import org.hl7.fhir.r4.model.HumanName
 import org.hl7.fhir.r4.model.Identifier
 import org.hl7.fhir.r4.model.Patient
-import org.hl7.fhir.r4.model.Period
 
 class AdmitService {
     private val identifiers = Identifiers()
@@ -44,14 +42,14 @@ class AdmitService {
 
     private fun getTenant(message: Message): Int? {
         val msh = message.get("MSH")
-        val hl7FacilityId = if (msh is MSH){
+        val hl7FacilityId = if (msh is MSH) {
             msh.sendingFacility.namespaceID.value
         } else {
             val messageType = (msh as GenericSegment).getField(4)[0] as Varies
             Terser.getPrimitive(messageType.data, 1, 1).value
         }
 
-        return when(hl7FacilityId) {
+        return when (hl7FacilityId) {
             "1" -> 1001
             "MDA" -> 1002
             "PSJ" -> 1003
