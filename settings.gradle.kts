@@ -12,10 +12,9 @@ rootProject.name = "integration-pocs"
 include("kotlin-mirth-demo")
 
 pluginManagement {
-    val interopGradleVersion: String by settings
     plugins {
-        id("com.projectronin.interop.gradle.base") version interopGradleVersion
-        id("com.projectronin.interop.gradle.publish") version interopGradleVersion
+        id("com.projectronin.interop.gradle.base") version "1.0.0-SNAPSHOT"
+        id("com.projectronin.interop.gradle.publish") version "1.0.0-SNAPSHOT"
     }
 
     repositories {
