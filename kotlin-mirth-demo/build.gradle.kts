@@ -18,7 +18,7 @@ dependencies {
     testRuntimeOnly("org.postgresql:postgresql:42.2.18")
     testImplementation("org.ktorm:ktorm-core:3.4.1")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
-    testRuntimeOnly("org.yaml:snakeyaml:1.29")
+    testRuntimeOnly("org.yaml:snakeyaml:1.30")
     testImplementation("com.github.database-rider:rider-junit5:1.29.0")
     testImplementation("io.mockk:mockk:1.12.0")
 }
