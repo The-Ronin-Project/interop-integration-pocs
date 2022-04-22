@@ -20,7 +20,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testRuntimeOnly("org.yaml:snakeyaml:1.30")
     testImplementation("com.github.database-rider:rider-junit5:1.29.0")
-    testImplementation("io.mockk:mockk:1.12.0")
+    testImplementation("io.mockk:mockk:1.12.3")
 }
 
 // Publishing
