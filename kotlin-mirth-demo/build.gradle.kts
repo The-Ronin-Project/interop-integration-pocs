@@ -5,7 +5,7 @@ dependencies {
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation("com.google.guava:guava:30.1-jre")
 
-    implementation("ca.uhn.hapi.fhir:hapi-fhir-structures-r4:5.4.1")
+    implementation("ca.uhn.hapi.fhir:hapi-fhir-structures-r4:5.7.2")
 
     implementation("ca.uhn.hapi:hapi-structures-v281:2.3")
 
