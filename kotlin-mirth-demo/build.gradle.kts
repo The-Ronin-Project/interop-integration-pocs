@@ -1,8 +1,3 @@
-plugins {
-    kotlin("jvm")
-    id("com.dipien.releaseshub.gradle.plugin") version "3.1.0"
-}
-
 dependencies {
     // Align versions of all Kotlin components
     implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.6.10"))
