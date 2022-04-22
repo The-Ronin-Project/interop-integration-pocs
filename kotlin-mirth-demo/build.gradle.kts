@@ -1,6 +1,6 @@
 dependencies {
     // Align versions of all Kotlin components
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.6.10"))
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.6.21"))
 
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation("com.google.guava:guava:30.1-jre")
