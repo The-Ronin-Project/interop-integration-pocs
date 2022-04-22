@@ -11,7 +11,7 @@ dependencies {
 
     implementation("org.liquibase:liquibase-core:4.9.1")
 
-    implementation("org.springframework.boot:spring-boot-starter-jdbc:2.5.3")
+    implementation("org.springframework.boot:spring-boot-starter-jdbc:2.6.7")
 
     testImplementation("org.testcontainers:junit-jupiter:1.17.1")
     testImplementation("org.testcontainers:postgresql:1.17.1")
