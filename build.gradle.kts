@@ -4,6 +4,7 @@ plugins {
     jacoco
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
     id("pl.allegro.tech.build.axion-release") version "1.13.6"
+    id("com.projectronin.interop.gradle.base")
 }
 
 repositories {
