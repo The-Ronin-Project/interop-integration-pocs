@@ -19,7 +19,7 @@ dependencies {
     testImplementation("org.ktorm:ktorm-core:3.4.1")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testRuntimeOnly("org.yaml:snakeyaml:1.30")
-    testImplementation("com.github.database-rider:rider-junit5:1.29.0")
+    testImplementation("com.github.database-rider:rider-junit5:1.32.3")
     testImplementation("io.mockk:mockk:1.12.3")
 }
 
