@@ -9,7 +9,7 @@ dependencies {
 
     implementation("ca.uhn.hapi:hapi-structures-v281:2.3")
 
-    implementation("org.liquibase:liquibase-core:4.4.3")
+    implementation("org.liquibase:liquibase-core:4.9.1")
 
     implementation("org.springframework.boot:spring-boot-starter-jdbc:2.5.3")
 
