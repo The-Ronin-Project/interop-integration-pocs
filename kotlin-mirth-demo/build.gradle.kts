@@ -1,32 +1,26 @@
-plugins {
-    kotlin("jvm")
-    id("org.jetbrains.kotlin.plugin.allopen") version "1.6.10"
-    id("com.dipien.releaseshub.gradle.plugin") version "3.1.0"
-}
-
 dependencies {
     // Align versions of all Kotlin components
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.6.10"))
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.6.21"))
 
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation("com.google.guava:guava:30.1-jre")
 
-    implementation("ca.uhn.hapi.fhir:hapi-fhir-structures-r4:5.4.1")
+    implementation("ca.uhn.hapi.fhir:hapi-fhir-structures-r4:5.7.2")
 
     implementation("ca.uhn.hapi:hapi-structures-v281:2.3")
 
-    implementation("org.liquibase:liquibase-core:4.4.3")
+    implementation("org.liquibase:liquibase-core:4.9.1")
 
-    implementation("org.springframework.boot:spring-boot-starter-jdbc:2.5.3")
+    implementation("org.springframework.boot:spring-boot-starter-jdbc:2.6.7")
 
-    testImplementation("org.testcontainers:junit-jupiter:1.16.0")
-    testImplementation("org.testcontainers:postgresql:1.16.0")
+    testImplementation("org.testcontainers:junit-jupiter:1.17.1")
+    testImplementation("org.testcontainers:postgresql:1.17.1")
     testRuntimeOnly("org.postgresql:postgresql:42.2.18")
     testImplementation("org.ktorm:ktorm-core:3.4.1")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
-    testRuntimeOnly("org.yaml:snakeyaml:1.29")
-    testImplementation("com.github.database-rider:rider-junit5:1.29.0")
-    testImplementation("io.mockk:mockk:1.12.0")
+    testRuntimeOnly("org.yaml:snakeyaml:1.30")
+    testImplementation("com.github.database-rider:rider-junit5:1.32.3")
+    testImplementation("io.mockk:mockk:1.12.3")
 }
 
 // Publishing
