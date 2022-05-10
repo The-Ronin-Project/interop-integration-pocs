@@ -19,13 +19,23 @@ jobs:
         with:
           java-version: 11
           distribution: 'zulu'
+      - name: Generate a one-time token
+        id: generate_token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.RONIN_ORG_APP_ID }}
+          private_key: ${{ secrets.ORG_LEVEL_TOKEN }}
+          # token is ${{ steps.generate_token.outputs.token }}
+          # in this model, we need to gen a one-time token with app id and key
+          # our write token for udpates will be this output
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Run Releases Hub
         run: ./gradlew upgradeDependencies
         env:
           gitHubRepository: ${{ github.REPOSITORY }}
-          gitHubWriteToken: ${{ secrets.CROSS_REPO_PAT }}
+          gitHubWriteToken: ${{ steps.generate_token.outputs.token }}
           gitUserEmail: "41898282+github-actions[bot]@users.noreply.github.com"
           gitUserName: "github-actions[bot]"
           pullRequestsMax: ${{ github.event.inputs.maxPRs || '5' }}
