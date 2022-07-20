@@ -21,6 +21,10 @@ dependencies {
     testRuntimeOnly("org.yaml:snakeyaml:1.30")
     testImplementation("com.github.database-rider:rider-junit5:1.32.3")
     testImplementation("io.mockk:mockk:1.12.3")
+
+    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
+    testImplementation("com.projectronin.interop:interop-common-jackson:2.1.0")
+    testImplementation("com.projectronin.interop.fhir:interop-fhir:1.2.1")
 }
 
 // Publishing

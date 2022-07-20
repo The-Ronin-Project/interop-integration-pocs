@@ -4,17 +4,7 @@ plugins {
     jacoco
     id("org.jlleitschuh.gradle.ktlint") version "10.2.1"
     id("pl.allegro.tech.build.axion-release") version "1.13.6"
-    id("com.projectronin.interop.gradle.base") version "1.0.0-SNAPSHOT"
-}
-
-repositories {
-    maven {
-        url = uri("https://repo.devops.projectronin.io/repository/maven-public/")
-        mavenContent {
-            releasesOnly()
-        }
-    }
-    maven(url = "https://plugins.gradle.org/m2/")
+    id("com.projectronin.interop.gradle.base") version "2.0.0"
 }
 
 allprojects {
