@@ -44,5 +44,9 @@ jobs:
           current_tag: ${{ needs.tag.outputs.tag }}
           previous_tag: ${{ needs.tag.outputs.last-tag }}
 
-      - name: Echo changelog
-        run: echo ${{ steps.changelog.outputs.changelog }}
+      - name: Generate Release
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ needs.tag.outputs.tag }}
+          body: ${{ steps.changelog.outputs.changelog }}
