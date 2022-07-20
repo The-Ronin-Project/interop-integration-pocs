@@ -12,7 +12,7 @@ jobs:
           ref: ${{ github.event.inputs.branch }}
       - name: Determine tag
         id: tag-name
-        run: echo "::set-output name=tag::$(date +'%Y-%m-%d')"
+        run: echo "::set-output name=tag::$(date +'%Y%m%d')"
       - name: Create tag
         uses: rickstaa/action-create-tag@v1
         with:
