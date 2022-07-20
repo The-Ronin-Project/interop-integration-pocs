@@ -1,0 +1,19 @@
+name: Create Dated Release
+on:
+  workflow_dispatch:
+
+jobs:
+  tag:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.branch }}
+      - name: Determine tag
+        id: tag-name
+        run: echo "::set-output name=tag::$(date +'%Y-%m-%d')"
+      - name: Create tag
+        uses: rickstaa/action-create-tag@v1
+        with:
+          tag: ${{ steps.tag-name.outputs.tag }}
