@@ -10,11 +10,12 @@
 rootProject.name = "integration-pocs"
 // include("graphql-demo")
 include("kotlin-mirth-demo")
+include("openapi-demo")
 
 pluginManagement {
     plugins {
-        id("com.projectronin.interop.gradle.base") version "1.0.0-SNAPSHOT"
-        id("com.projectronin.interop.gradle.publish") version "1.0.0-SNAPSHOT"
+        id("com.projectronin.interop.gradle.base") version "2.0.0"
+        id("com.projectronin.interop.gradle.publish") version "2.0.0"
     }
 
     repositories {

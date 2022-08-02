@@ -1,0 +1,4 @@
+# OpenAPI Generator Ignore
+
+# This should be generated, but it generates a version that requires Spring Boot 3, which isn't released yet.
+**/src/main/kotlin/com/projectronin/interop/openapi/SpringDocConfiguration.kt

@@ -1,0 +1,33 @@
+openapi: 3.0.0
+info:
+  title: Test API
+  description: Just a basic API to test some stuff
+  version: 0.0.1
+
+paths:
+  /channels:
+    get:
+      summary: Returns a list of channels
+      description: Some more details
+      responses:
+        '200':
+          description: A successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+
+components:
+  schemas:
+    Channel:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 4
+        name:
+          type: string
+          example: Channel name
+      required:
+        - id
+        - name
