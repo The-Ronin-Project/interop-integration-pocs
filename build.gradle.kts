@@ -5,7 +5,11 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "10.2.1"
     id("pl.allegro.tech.build.axion-release") version "1.13.6"
     id("com.projectronin.interop.gradle.base") version "2.0.0"
+
+    id("com.projectronin.interop.mirth.deploy")
 }
+
+apply(from = "deploy.gradle.kts")
 
 allprojects {
     apply(plugin = "java")
