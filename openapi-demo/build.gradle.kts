@@ -1,3 +1,6 @@
+import org.jetbrains.gradle.ext.settings
+import org.jetbrains.gradle.ext.taskTriggers
+
 plugins {
     id("com.projectronin.interop.gradle.base")
     id("org.openapi.generator") version "6.0.1"
@@ -30,15 +33,36 @@ openApiGenerate {
     ignoreFileOverride.set("$projectDir/.openapi-generator-ignore")
     configOptions.set(
         mapOf(
+            "enumPropertyNaming" to "UPPERCASE",
             "interfaceOnly" to "true",
+            "useTags" to "true",
             "packageName" to "com.projectronin.interop.openapi",
             "basePackage" to "com.projectronin.interop.openapi",
+            "gradleBuildFile" to "false"
         )
     )
 }
 
-tasks.compileKotlin {
-    dependsOn(tasks.openApiGenerate.get())
+tasks {
+    val openApiGenerate by getting
+
+    kotlin.sourceSets["main"].kotlin.srcDir(openApiGenerate)
+
+    val compileKotlin by getting {
+        dependsOn(openApiGenerate)
+    }
+
+    rootProject.idea.project.settings {
+        taskTriggers {
+            afterSync(openApiGenerate)
+        }
+    }
 }
 
-kotlin.sourceSets["main"].kotlin.srcDir("$buildDir/generated/src/main/kotlin")
+ktlint {
+    filter {
+        exclude {
+            it.file.path.contains("/generated/")
+        }
+    }
+}

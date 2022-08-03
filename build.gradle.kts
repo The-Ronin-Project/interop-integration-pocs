@@ -1,10 +1,11 @@
 plugins {
-    kotlin("jvm") version "1.6.10"
+    kotlin("jvm") version "1.7.10"
     `kotlin-dsl`
     jacoco
     id("org.jlleitschuh.gradle.ktlint") version "10.2.1"
     id("pl.allegro.tech.build.axion-release") version "1.13.6"
     id("com.projectronin.interop.gradle.base") version "2.0.0"
+    id("org.jetbrains.gradle.plugin.idea-ext") version "1.1.6"
 }
 
 allprojects {
@@ -110,6 +111,7 @@ allprojects {
 
 subprojects {
     apply(plugin = "com.projectronin.interop.gradle.base")
+    apply(plugin = "org.jetbrains.gradle.plugin.idea-ext")
 
     // Disable releases hub from running on the subprojects. Main project will handle it all.
     tasks.filter { it.group.equals("releases hub", ignoreCase = true) }.forEach { it.enabled = false }
