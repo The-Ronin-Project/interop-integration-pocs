@@ -8,6 +8,8 @@ id_file
 data
 codecov/
 
+log-processor/src/main/resources/*
+
 # Ignore Gradle project-specific cache directory
 .gradle
 
