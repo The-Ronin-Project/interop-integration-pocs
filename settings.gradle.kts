@@ -14,8 +14,8 @@ include("log-processor")
 
 pluginManagement {
     plugins {
-        id("com.projectronin.interop.gradle.base") version "2.1.2"
-        id("com.projectronin.interop.gradle.publish") version "2.1.2"
+        id("com.projectronin.interop.gradle.base") version "2.1.3"
+        id("com.projectronin.interop.gradle.publish") version "2.1.3"
     }
 
     repositories {
