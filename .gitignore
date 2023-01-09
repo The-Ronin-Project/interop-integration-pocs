@@ -7,8 +7,11 @@ id_file
 .idea
 data
 codecov/
+.DS_Store
 
 log-processor/src/main/resources/*
+data-loader/src/main/resources/mrns.txt
+**/loaded/
 
 # Ignore Gradle project-specific cache directory
 .gradle

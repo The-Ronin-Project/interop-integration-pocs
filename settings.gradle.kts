@@ -11,6 +11,7 @@ rootProject.name = "integration-pocs"
 // include("graphql-demo")
 include("kotlin-mirth-demo")
 include("log-processor")
+include("data-loader")
 
 pluginManagement {
     plugins {
