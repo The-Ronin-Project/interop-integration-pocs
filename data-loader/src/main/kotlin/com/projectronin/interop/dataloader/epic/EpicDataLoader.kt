@@ -2,9 +2,7 @@ package com.projectronin.interop.dataloader.epic
 
 import com.projectronin.interop.common.http.spring.HttpSpringConfig
 import com.projectronin.interop.common.vendor.VendorType
-import com.projectronin.interop.dataloader.epic.resource.ConditionDataLoader
-import com.projectronin.interop.dataloader.epic.resource.MedicationDataLoader
-import com.projectronin.interop.dataloader.epic.resource.ObservationDataLoader
+import com.projectronin.interop.dataloader.epic.resource.DocumentReferenceDataLoader
 import com.projectronin.interop.ehr.auth.EHRAuthenticationBroker
 import com.projectronin.interop.ehr.epic.EpicPatientService
 import com.projectronin.interop.ehr.epic.auth.EpicAuthenticationService
@@ -19,7 +17,6 @@ import io.mockk.every
 import io.mockk.mockk
 import mu.KotlinLogging
 import java.nio.file.Paths
-import java.time.LocalDate
 import kotlin.io.path.createDirectory
 import kotlin.system.exitProcess
 import com.projectronin.interop.aidbox.PatientService as AidboxPatientService
@@ -67,23 +64,7 @@ class EpicDataLoader {
         runCatching { Paths.get("loaded").createDirectory() }
 
         val patientsByMRN = getPatientsForMRNs(getMRNs())
-        ConditionDataLoader(epicClient).load(patientsByMRN, tenant, "loaded/conditions.csv")
-        ObservationDataLoader(epicClient).load(
-            patientsByMRN,
-            tenant,
-            LocalDate.of(2022, 1, 1),
-            "loaded/observations.csv"
-        )
-        MedicationDataLoader(epicClient).load(patientsByMRN, tenant, "loaded/medications.csv")
-
-        // This one is focused on Genomics specifically.
-        ObservationDataLoader(epicClient).load(
-            patientsByMRN,
-            tenant,
-            null,
-            "loaded/genomics.csv",
-            listOf("genomics")
-        )
+        DocumentReferenceDataLoader(epicClient).load(patientsByMRN, tenant, "loaded/docRefs.csv")
     }
 
     private fun getMRNs(): Set<String> =
