@@ -3,6 +3,7 @@ package com.projectronin.interop.dataloader.epic
 import com.projectronin.interop.common.http.spring.HttpSpringConfig
 import com.projectronin.interop.common.vendor.VendorType
 import com.projectronin.interop.dataloader.epic.resource.ConditionDataLoader
+import com.projectronin.interop.dataloader.epic.resource.DiagnosticReportDataLoader
 import com.projectronin.interop.dataloader.epic.resource.MedicationDataLoader
 import com.projectronin.interop.dataloader.epic.resource.ObservationDataLoader
 import com.projectronin.interop.ehr.auth.EHRAuthenticationBroker
@@ -67,6 +68,7 @@ class EpicDataLoader {
         runCatching { Paths.get("loaded").createDirectory() }
 
         val patientsByMRN = getPatientsForMRNs(getMRNs())
+        DiagnosticReportDataLoader(epicClient).load(patientsByMRN, tenant, "loaded/diagnostics.csv")
         ConditionDataLoader(epicClient).load(patientsByMRN, tenant, "loaded/conditions.csv")
         ObservationDataLoader(epicClient).load(
             patientsByMRN,
