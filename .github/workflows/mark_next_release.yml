@@ -2,10 +2,14 @@ name: Mark Next Release
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'What should the next release version be?'
-        type: string
+      increment:
+        description: 'Type of version increment to perform for next release'
+        type: choice
         required: true
+        options:
+          - Patch
+          - Minor
+          - Major
 
 jobs:
   build:
@@ -26,6 +30,6 @@ jobs:
       - name: Mark version
         run: |
           ./gradlew markNextVersion \
-             -Prelease.version=${{ github.event.inputs.version }} \
+             -Prelease.versionIncrementer=increment${{ github.event.inputs.increment }} \
              -Prelease.customUsername=${{ github.actor }} \
              -Prelease.customPassword=${{ github.token }}
