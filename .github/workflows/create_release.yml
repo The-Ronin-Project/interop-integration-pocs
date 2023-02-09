@@ -53,7 +53,7 @@ jobs:
              -Prelease.customUsername=${{ github.actor }} \
              -Prelease.customPassword=${{ github.token }}
 
-      - name: Get version
+      - name: Get version.
         id: get-version
         run: |
           VERSION=$(./gradlew currentVersion | awk '{ if(/Project version:/) { print $3; exit } }' | cut -d\- -f1)
