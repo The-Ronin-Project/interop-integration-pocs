@@ -70,7 +70,8 @@ class ConditionDataLoader(epicClient: EpicClient) {
                         coding.system?.value ?: "",
                         coding.code?.value ?: "",
                         coding.display?.value ?: ""
-                    ), it
+                    ),
+                    it
                 )
             }
         }.flatten().associate { it.first to it.second }

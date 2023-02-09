@@ -78,7 +78,8 @@ class ObservationDataLoader(epicClient: EpicClient) {
                             patient,
                             tenant,
                             "http://snomed.info/sct|384821006",
-                            interestedObservations, startDate,
+                            interestedObservations,
+                            startDate,
                             mrn,
                             writer
                         )
@@ -86,7 +87,8 @@ class ObservationDataLoader(epicClient: EpicClient) {
                             patient,
                             tenant,
                             "http://snomed.info/sct|118228005",
-                            interestedObservations, startDate,
+                            interestedObservations,
+                            startDate,
                             mrn,
                             writer
                         )
@@ -159,7 +161,8 @@ class ObservationDataLoader(epicClient: EpicClient) {
                             coding.system?.value ?: "",
                             coding.code?.value ?: "",
                             coding.display?.value ?: ""
-                        ), it
+                        ),
+                        it
                     )
                 }
             }.flatten().associate { it.first to it.second }
