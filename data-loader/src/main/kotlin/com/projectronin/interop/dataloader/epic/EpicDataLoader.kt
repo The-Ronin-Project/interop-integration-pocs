@@ -6,6 +6,8 @@ import com.projectronin.interop.dataloader.epic.resource.ConditionDataLoader
 import com.projectronin.interop.dataloader.epic.resource.DiagnosticReportDataLoader
 import com.projectronin.interop.dataloader.epic.resource.MedicationDataLoader
 import com.projectronin.interop.dataloader.epic.resource.ObservationDataLoader
+import com.projectronin.interop.dataloader.epic.resource.StagingByConditionDataLoader
+import com.projectronin.interop.dataloader.epic.resource.StagingDataLoader
 import com.projectronin.interop.ehr.auth.EHRAuthenticationBroker
 import com.projectronin.interop.ehr.epic.EpicPatientService
 import com.projectronin.interop.ehr.epic.auth.EpicAuthenticationService
@@ -86,6 +88,9 @@ class EpicDataLoader {
             "loaded/genomics.csv",
             listOf("genomics")
         )
+
+        StagingDataLoader(epicClient).load(patientsByMRN, tenant, "loaded/staging.csv")
+        StagingByConditionDataLoader(epicClient).load(patientsByMRN, tenant, "loaded/FHIRstaging.csv")
     }
 
     private fun getMRNs(): Set<String> =
