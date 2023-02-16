@@ -24,7 +24,7 @@ class StagingByConditionDataLoader(epicClient: EpicClient) {
     fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, filename: String = "FHIRstaging.csv") {
         logger.info { "Loading staging observations through conditions" }
         BufferedWriter(FileWriter(File(filename))).use { writer ->
-            writer.write(""""MRN",""")
+            writer.write(""""ID","MRN","JSON"""")
             writer.newLine()
 
             var totalTime: Long = 0
@@ -54,17 +54,18 @@ class StagingByConditionDataLoader(epicClient: EpicClient) {
         writer: BufferedWriter
     ) {
         val bundle = observationConditionService.findConditionsAndObservations(tenant, patient.id!!.value!!)
-        writeStagingData(bundle, mrn, writer)
+        writeStagingData(bundle, mrn, patient, writer)
     }
 
     private fun writeStagingData(
         bundle: Bundle,
         mrn: String,
+        patient: Patient,
         writer: BufferedWriter
     ) {
         val json = JacksonManager.objectMapper.writeValueAsString(bundle)
         val escapedJson = StringEscapeUtils.escapeCsv(json)
-        writer.write(""""$mrn",$escapedJson""")
+        writer.write(""""${patient.id!!.value}","$mrn",$escapedJson""")
         writer.newLine()
     }
 }

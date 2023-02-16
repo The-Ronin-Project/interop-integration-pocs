@@ -26,6 +26,7 @@ class StagingDataLoader(epicClient: EpicClient) {
         BufferedWriter(FileWriter(File(filename))).use { writer ->
             writer.write(
                 listOf(
+                    "ID",
                     "MRN",
                     "Problem Description",
                     "Problem ID",
@@ -52,10 +53,10 @@ class StagingDataLoader(epicClient: EpicClient) {
             writer.newLine()
 
             var totalTime: Long = 0
-            patientsByMrn.entries.forEachIndexed { index, (mrn, _) ->
+            patientsByMrn.entries.forEachIndexed { index, (mrn, patient) ->
                 val executionTime = measureTimeMillis {
                     val run = runCatching {
-                        loadAndWriteStagingReports(tenant, mrn, writer)
+                        loadAndWriteStagingReports(tenant, mrn, patient, writer)
                     }
 
                     if (run.isFailure) {
@@ -75,28 +76,31 @@ class StagingDataLoader(epicClient: EpicClient) {
     private fun loadAndWriteStagingReports(
         tenant: Tenant,
         mrn: String,
+        patient: Patient,
         writer: BufferedWriter
     ) {
         val stagingReport = stagingReportService.getStagingReportsByPatient(tenant, mrn)
-        writeStagingReport(stagingReport, mrn, writer)
+        writeStagingReport(stagingReport, mrn, patient, writer)
         writer.flush()
     }
 
     private fun writeStagingReport(
         stagingReport: GetPatientStagingResponse,
         mrn: String,
+        patient: Patient,
         writer: BufferedWriter
     ) {
         val json = JacksonManager.objectMapper.writeValueAsString(stagingReport)
         val escapedJson = StringEscapeUtils.escapeCsv(json)
 
         if (stagingReport.stages.isEmpty()) {
-            writer.write("\"$mrn\"" + ",\"\"".repeat(19) + ",$escapedJson")
+            writer.write("\"${patient.id!!.value!!}\",\"$mrn\"" + ",\"\"".repeat(19) + ",$escapedJson")
             writer.newLine()
         } else {
             stagingReport.stages.forEach { stage ->
                 writer.write(
                     listOf(
+                        patient.id!!.value!!,
                         mrn,
                         stage.problemDescription,
                         stage.problemID,
