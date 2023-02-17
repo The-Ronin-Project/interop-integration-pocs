@@ -7,7 +7,6 @@ import com.projectronin.interop.fhir.r4.resource.Bundle
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.tenant.config.model.Tenant
 import mu.KotlinLogging
-import org.apache.commons.text.StringEscapeUtils
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -16,33 +15,32 @@ import kotlin.system.measureTimeMillis
 /*
     If we ever decide to do something like this for real, this should probably be merged with the ConditionDataLoader,
     but for a quick data pull this is fine for now.
+
+    New ask from INFX, instead of writing out a csv file, can we write a separate JSON file for every patient that has
+    staging data.  They literally want us to include every bundle with the string "stage": in it to avoid potentially
+    missing anything.
  */
 class StagingByConditionDataLoader(epicClient: EpicClient) {
     private val logger = KotlinLogging.logger { }
     private val observationConditionService = EpicObservationConditionService(epicClient)
 
-    fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, filename: String = "FHIRstaging.csv") {
+    fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant) {
         logger.info { "Loading staging observations through conditions" }
-        BufferedWriter(FileWriter(File(filename))).use { writer ->
-            writer.write(""""ID","MRN","JSON"""")
-            writer.newLine()
-
-            var totalTime: Long = 0
-            patientsByMrn.entries.forEachIndexed { index, (mrn, patient) ->
-                val executionTime = measureTimeMillis {
-                    val run = runCatching {
-                        loadAndWriteStagingReports(patient, tenant, mrn, writer)
-                    }
-
-                    if (run.isFailure) {
-                        val exception = run.exceptionOrNull()
-                        logger.error(exception) { "Error processing $mrn: ${exception?.message}" }
-                    }
+        var totalTime: Long = 0
+        patientsByMrn.entries.forEachIndexed { index, (mrn, patient) ->
+            val executionTime = measureTimeMillis {
+                val run = runCatching {
+                    loadAndWriteStagingReports(patient, tenant, mrn)
                 }
 
-                totalTime += executionTime
-                logger.info { "Completed ${index + 1} of ${patientsByMrn.size}. Last took $executionTime ms. Current average: ${totalTime / (index + 1)}" }
+                if (run.isFailure) {
+                    val exception = run.exceptionOrNull()
+                    logger.error(exception) { "Error processing $mrn: ${exception?.message}" }
+                }
             }
+
+            totalTime += executionTime
+            logger.info { "Completed ${index + 1} of ${patientsByMrn.size}. Last took $executionTime ms. Current average: ${totalTime / (index + 1)}" }
         }
         logger.info { "Done loading conditions" }
     }
@@ -50,23 +48,22 @@ class StagingByConditionDataLoader(epicClient: EpicClient) {
     private fun loadAndWriteStagingReports(
         patient: Patient,
         tenant: Tenant,
-        mrn: String,
-        writer: BufferedWriter
+        mrn: String
     ) {
         val bundle = observationConditionService.findConditionsAndObservations(tenant, patient.id!!.value!!)
-        writeStagingData(bundle, mrn, patient, writer)
+        writeStagingData(bundle, mrn)
     }
 
     private fun writeStagingData(
         bundle: Bundle,
-        mrn: String,
-        patient: Patient,
-        writer: BufferedWriter
+        mrn: String
     ) {
         val json = JacksonManager.objectMapper.writeValueAsString(bundle)
-        val escapedJson = StringEscapeUtils.escapeCsv(json)
-        writer.write(""""${patient.id!!.value}","$mrn",$escapedJson""")
-        writer.newLine()
+        if (json.contains("\"stage\":", true)) {
+            BufferedWriter(FileWriter(File("loaded/$mrn.json"))).use { writer ->
+                writer.write(json)
+            }
+        }
     }
 }
 

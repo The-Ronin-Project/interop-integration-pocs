@@ -90,7 +90,7 @@ class EpicDataLoader {
         )
 
         StagingDataLoader(epicClient).load(patientsByMRN, tenant, "loaded/staging.csv")
-        StagingByConditionDataLoader(epicClient).load(patientsByMRN, tenant, "loaded/FHIRstaging.csv")
+        StagingByConditionDataLoader(epicClient).load(patientsByMRN, tenant)
     }
 
     private fun getMRNs(): Set<String> =
