@@ -20,8 +20,10 @@ class StagingDataLoader(epicClient: EpicClient) {
     private val logger = KotlinLogging.logger { }
     private val stagingReportService = EpicStagingReportService(epicClient)
 
-    fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, filename: String = "staging.csv") {
+    fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, filename: String = "staging.csv"): Map<String, Patient> {
         logger.info { "Loading staging reports" }
+
+        val cancerPatientsByMrn = mutableMapOf<String, Patient>()
 
         BufferedWriter(FileWriter(File(filename))).use { writer ->
             writer.write(
@@ -56,7 +58,9 @@ class StagingDataLoader(epicClient: EpicClient) {
             patientsByMrn.entries.forEachIndexed { index, (mrn, patient) ->
                 val executionTime = measureTimeMillis {
                     val run = runCatching {
-                        loadAndWriteStagingReports(tenant, mrn, patient, writer)
+                        if (loadAndWriteStagingReports(tenant, mrn, patient, writer)) {
+                            cancerPatientsByMrn[mrn] = patient
+                        }
                     }
 
                     if (run.isFailure) {
@@ -71,6 +75,7 @@ class StagingDataLoader(epicClient: EpicClient) {
         }
 
         logger.info { "Done loading staging reports" }
+        return cancerPatientsByMrn
     }
 
     private fun loadAndWriteStagingReports(
@@ -78,10 +83,13 @@ class StagingDataLoader(epicClient: EpicClient) {
         mrn: String,
         patient: Patient,
         writer: BufferedWriter
-    ) {
+    ): Boolean {
         val stagingReport = stagingReportService.getStagingReportsByPatient(tenant, mrn)
         writeStagingReport(stagingReport, mrn, patient, writer)
         writer.flush()
+
+        // Return true if the patient has staging data
+        return stagingReport.stages.isNotEmpty()
     }
 
     private fun writeStagingReport(

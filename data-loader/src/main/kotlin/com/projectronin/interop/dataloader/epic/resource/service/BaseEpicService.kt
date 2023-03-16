@@ -7,6 +7,7 @@ import com.projectronin.interop.fhir.r4.resource.Resource
 import com.projectronin.interop.fhir.stu3.resource.STU3Bundle
 import com.projectronin.interop.tenant.config.model.Tenant
 import io.ktor.client.call.body
+import io.ktor.util.reflect.TypeInfo
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -94,5 +95,12 @@ abstract class BaseEpicService<T : Resource<T>>(val epicClient: EpicClient) {
             }
         }
         return parameters + parametersToAdd
+    }
+
+    fun searchByID(tenant: Tenant, resourceFHIRId: String): T {
+        return runBlocking {
+            epicClient.get(tenant, "$fhirURLSearchPart?_id=$resourceFHIRId")
+                .body(TypeInfo(fhirResourceType.kotlin, fhirResourceType))
+        }
     }
 }
