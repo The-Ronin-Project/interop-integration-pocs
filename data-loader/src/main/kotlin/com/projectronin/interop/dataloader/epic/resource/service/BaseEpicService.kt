@@ -30,7 +30,7 @@ abstract class BaseEpicService<T : Resource<T>>(val epicClient: EpicClient) {
 
     fun getBundleWithPaging(
         tenant: Tenant,
-        parameters: Map<String, Any?>,
+        parameters: Map<String, Any?>
     ): Bundle {
         val standardizedParameters = standardizeParameters(parameters)
 
@@ -55,7 +55,7 @@ abstract class BaseEpicService<T : Resource<T>>(val epicClient: EpicClient) {
 
     fun getBundleWithPagingSTU3(
         tenant: Tenant,
-        parameters: Map<String, Any?>,
+        parameters: Map<String, Any?>
     ): Bundle {
         val standardizedParameters = standardizeParameters(parameters)
 
@@ -79,7 +79,7 @@ abstract class BaseEpicService<T : Resource<T>>(val epicClient: EpicClient) {
     }
 
     fun mergeResponses(
-        responses: List<Bundle>,
+        responses: List<Bundle>
     ): Bundle {
         var bundle = responses.first()
         responses.subList(1, responses.size).forEach { bundle = mergeBundles(bundle, it) }

@@ -1,10 +1,10 @@
 plugins {
-    kotlin("jvm") version "1.6.10"
+    kotlin("jvm") version "1.8.0"
     `kotlin-dsl`
     jacoco
-    id("org.jlleitschuh.gradle.ktlint") version "10.2.1"
-    id("pl.allegro.tech.build.axion-release") version "1.13.6"
-    id("com.projectronin.interop.gradle.base") version "2.0.0"
+    id("org.jlleitschuh.gradle.ktlint") version "11.3.1"
+    id("pl.allegro.tech.build.axion-release") version "1.14.4"
+    id("com.projectronin.interop.gradle.base") version "3.0.0"
 }
 
 allprojects {
@@ -28,31 +28,25 @@ allprojects {
 
 // Versioning/release
     scmVersion {
-        tag(
-            closureOf<pl.allegro.tech.build.axion.release.domain.TagNameSerializationConfig> {
-                initialVersion =
-                    org.gradle.kotlin.dsl.KotlinClosure2<pl.allegro.tech.build.axion.release.domain.properties.TagProperties, pl.allegro.tech.build.axion.release.domain.scm.ScmPosition, String>(
-                        { _, _ -> "1.0.0" }
-                    )
-                prefix = ""
+        tag {
+            initialVersion(pl.allegro.tech.build.axion.release.domain.properties.TagProperties.InitialVersionSupplier { _, _ -> "1.0.0" })
+            prefix.set("")
+        }
+        versionCreator { versionFromTag, position ->
+            val supportedHeads = setOf("HEAD", "master", "main")
+            if (!supportedHeads.contains(position.branch)) {
+                val jiraBranchRegex = Regex("(\\w+)-(\\d+)-(.+)")
+                val match = jiraBranchRegex.matchEntire(position.branch)
+                val branchExtension = match?.let {
+                    val (project, number, _) = it.destructured
+                    "$project$number"
+                } ?: position.branch
+
+                "$versionFromTag-$branchExtension"
+            } else {
+                versionFromTag
             }
-        )
-        versionCreator =
-            KotlinClosure2<String, pl.allegro.tech.build.axion.release.domain.scm.ScmPosition, String>({ versionFromTag, position ->
-                if (position.branch != "main" && position.branch != "HEAD") {
-                    val jiraBranchRegex = Regex("(\\w+)-(\\d+)-(.+)")
-                    val match = jiraBranchRegex.matchEntire(position.branch)
-
-                    val branchExtension = match?.let {
-                        val (project, number, _) = it.destructured
-                        "$project$number"
-                    } ?: position.branch
-
-                    "$versionFromTag-$branchExtension"
-                } else {
-                    versionFromTag
-                }
-            })
+        }
     }
 
     project.version = scmVersion.version
