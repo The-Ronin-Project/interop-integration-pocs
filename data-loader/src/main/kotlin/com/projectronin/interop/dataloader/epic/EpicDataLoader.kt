@@ -2,6 +2,7 @@ package com.projectronin.interop.dataloader.epic
 
 import com.projectronin.interop.common.http.spring.HttpSpringConfig
 import com.projectronin.interop.common.vendor.VendorType
+import com.projectronin.interop.dataloader.epic.resource.CarePlanCategory
 import com.projectronin.interop.dataloader.epic.resource.ConditionDataLoader
 import com.projectronin.interop.dataloader.epic.resource.DiagnosticReportAndObservationDataLoader
 import com.projectronin.interop.dataloader.epic.resource.DiagnosticReportDataLoader
@@ -9,6 +10,9 @@ import com.projectronin.interop.dataloader.epic.resource.DocumentReferenceDataLo
 import com.projectronin.interop.dataloader.epic.resource.MedicationDataLoader
 import com.projectronin.interop.dataloader.epic.resource.ObservationDataLoader
 import com.projectronin.interop.dataloader.epic.resource.ObservationLabCounter
+import com.projectronin.interop.dataloader.epic.resource.SkinnyCarePlanDataLoader
+import com.projectronin.interop.dataloader.epic.resource.SkinnyDiagnosticReportDataLoader
+import com.projectronin.interop.dataloader.epic.resource.SkinnyDocumentReferenceDataLoader
 import com.projectronin.interop.dataloader.epic.resource.StagingByConditionDataLoader
 import com.projectronin.interop.dataloader.epic.resource.StagingDataLoader
 import com.projectronin.interop.ehr.auth.EHRAuthenticationBroker
@@ -107,6 +111,9 @@ class EpicDataLoader {
             "loaded/lab_count.csv"
         )
         DocumentReferenceDataLoader(epicClient, ehrAuthenticationBroker, httpClient).load(patientsByMRN, tenant)
+        SkinnyCarePlanDataLoader(epicClient).load(patientsByMRN, tenant, CarePlanCategory.ONCOLOGY)
+        SkinnyDiagnosticReportDataLoader(epicClient).load(patientsByMRN, tenant)
+        SkinnyDocumentReferenceDataLoader(epicClient).load(patientsByMRN, tenant)
     }
 
     private fun getMRNs(): Set<String> =
