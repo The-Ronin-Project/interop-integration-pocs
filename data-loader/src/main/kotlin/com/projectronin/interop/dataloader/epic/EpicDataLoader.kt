@@ -2,19 +2,7 @@ package com.projectronin.interop.dataloader.epic
 
 import com.projectronin.interop.common.http.spring.HttpSpringConfig
 import com.projectronin.interop.common.vendor.VendorType
-import com.projectronin.interop.dataloader.epic.resource.CarePlanCategory
-import com.projectronin.interop.dataloader.epic.resource.ConditionDataLoader
-import com.projectronin.interop.dataloader.epic.resource.DiagnosticReportAndObservationDataLoader
-import com.projectronin.interop.dataloader.epic.resource.DiagnosticReportDataLoader
-import com.projectronin.interop.dataloader.epic.resource.DocumentReferenceDataLoader
-import com.projectronin.interop.dataloader.epic.resource.MedicationDataLoader
-import com.projectronin.interop.dataloader.epic.resource.ObservationDataLoader
-import com.projectronin.interop.dataloader.epic.resource.ObservationLabCounter
-import com.projectronin.interop.dataloader.epic.resource.SkinnyCarePlanDataLoader
 import com.projectronin.interop.dataloader.epic.resource.SkinnyDiagnosticReportDataLoader
-import com.projectronin.interop.dataloader.epic.resource.SkinnyDocumentReferenceDataLoader
-import com.projectronin.interop.dataloader.epic.resource.StagingByConditionDataLoader
-import com.projectronin.interop.dataloader.epic.resource.StagingDataLoader
 import com.projectronin.interop.ehr.auth.EHRAuthenticationBroker
 import com.projectronin.interop.ehr.epic.EpicPatientService
 import com.projectronin.interop.ehr.epic.auth.EpicAuthenticationService
@@ -29,16 +17,24 @@ import io.mockk.every
 import io.mockk.mockk
 import mu.KotlinLogging
 import java.nio.file.Paths
-import java.time.LocalDate
 import kotlin.io.path.createDirectory
 import kotlin.system.exitProcess
 import com.projectronin.interop.aidbox.PatientService as AidboxPatientService
 
+// Values can be found in the customer you want to pull froms tenant config when setting up your environment
 val mrnSystem: String = System.getenv("LOAD_MRN_SYSTEM")
 val loadClientId: String = System.getenv("LOAD_CLIENT_ID")
 val loadServiceEndpoint: String = System.getenv("LOAD_SERVICE_ENDPOINT")
 val loadAuthEndpoint: String = System.getenv("LOAD_AUTH_ENDPOINT")
 val loadPrivateKey: String = System.getenv("LOAD_PRIVATE_KEY")
+
+// Values can be found in Vault mirth-connector when setting up your environment
+val namespace: String = System.getenv("LOAD_OCI_NAMESPACE")
+val tenancyOCID: String = System.getenv("LOAD_OCI_TENANCY_OCID")
+val userOCID: String = System.getenv("LOAD_OCI_USER_OCID")
+val fingerPrint: String = System.getenv("LOAD_OCI_FINGERPRINT")
+val regionId: String = System.getenv("LOAD_OCI_REGION_ID")
+val privateKey: String = System.getenv("LOAD_OCI_PRIVATE_KEY")
 
 fun main() {
     EpicDataLoader().load()
@@ -50,6 +46,15 @@ fun main() {
 class EpicDataLoader {
     private val logger = KotlinLogging.logger { }
     private val httpClient = HttpSpringConfig().getHttpClient()
+    private val expClient = ExperimentationOCIClient(
+        tenancyOCID = tenancyOCID,
+        userOCID = userOCID,
+        fingerPrint = fingerPrint,
+        privateKey = privateKey,
+        namespace = namespace,
+        regionId = regionId,
+        experimentationBucket = "interop-poc-test"
+    )
 
     private val epicAuthenticationService = EpicAuthenticationService(httpClient)
     private val ehrAuthenticationBroker = EHRAuthenticationBroker(listOf(epicAuthenticationService))
@@ -74,46 +79,11 @@ class EpicDataLoader {
     }
 
     fun load() {
+        val timeStamp = System.currentTimeMillis().toString()
         runCatching { Paths.get("loaded").createDirectory() }
 
         val patientsByMRN = getPatientsForMRNs(getMRNs())
-        val cancerPatientsByMrn = StagingDataLoader(epicClient).load(patientsByMRN, tenant, "loaded/staging.csv")
-
-        DiagnosticReportDataLoader(epicClient, ehrAuthenticationBroker, httpClient).load(
-            patientsByMRN,
-            tenant,
-            "loaded/diagnostics.csv"
-        )
-        ConditionDataLoader(epicClient).load(patientsByMRN, tenant, "loaded/conditions.csv")
-        ObservationDataLoader(epicClient).load(
-            patientsByMRN,
-            tenant,
-            LocalDate.of(2022, 1, 1),
-            "loaded/observations.csv"
-        )
-        MedicationDataLoader(epicClient).load(patientsByMRN, tenant, "loaded/medications.csv")
-
-        // This one is focused on Genomics specifically.
-        ObservationDataLoader(epicClient).load(
-            patientsByMRN,
-            tenant,
-            null,
-            "loaded/genomics.csv",
-            listOf("genomics")
-        )
-
-        StagingByConditionDataLoader(epicClient).load(patientsByMRN, tenant)
-        DiagnosticReportAndObservationDataLoader(epicClient).load(cancerPatientsByMrn, tenant)
-
-        ObservationLabCounter(epicClient).load(
-            cancerPatientsByMrn,
-            tenant,
-            "loaded/lab_count.csv"
-        )
-        DocumentReferenceDataLoader(epicClient, ehrAuthenticationBroker, httpClient).load(patientsByMRN, tenant)
-        SkinnyCarePlanDataLoader(epicClient).load(patientsByMRN, tenant, CarePlanCategory.ONCOLOGY)
-        SkinnyDiagnosticReportDataLoader(epicClient).load(patientsByMRN, tenant)
-        SkinnyDocumentReferenceDataLoader(epicClient).load(patientsByMRN, tenant)
+        SkinnyDiagnosticReportDataLoader(epicClient, expClient).load(patientsByMRN, tenant, timeStamp)
     }
 
     private fun getMRNs(): Set<String> =
