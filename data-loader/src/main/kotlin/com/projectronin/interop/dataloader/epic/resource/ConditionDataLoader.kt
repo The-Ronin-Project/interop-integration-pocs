@@ -1,91 +1,138 @@
 package com.projectronin.interop.dataloader.epic.resource
 
-import com.projectronin.interop.common.jackson.JacksonManager
-import com.projectronin.interop.dataloader.epic.Code
+import com.projectronin.interop.dataloader.epic.ExperimentationOCIClient
+import com.projectronin.interop.dataloader.epic.resource.service.BaseEpicService
 import com.projectronin.interop.ehr.epic.EpicConditionService
 import com.projectronin.interop.ehr.epic.client.EpicClient
 import com.projectronin.interop.fhir.r4.resource.Condition
+import com.projectronin.interop.fhir.r4.resource.Observation
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.tenant.config.model.Tenant
 import mu.KotlinLogging
-import org.apache.commons.text.StringEscapeUtils
-import java.io.BufferedWriter
-import java.io.File
-import java.io.FileWriter
+import java.nio.file.Paths
+import kotlin.io.path.createDirectory
 import kotlin.system.measureTimeMillis
 
-class ConditionDataLoader(epicClient: EpicClient) {
+class ConditionDataLoader(
+    epicClient: EpicClient,
+    expOCIClient: ExperimentationOCIClient
+) : BaseLoader(expOCIClient) {
     private val logger = KotlinLogging.logger { }
-    private val flushFrequency = 1_000
     private val conditionService = EpicConditionService(epicClient)
+    private val observationService = EpicObservationFromConditionService(epicClient)
+    private val resourceType = "conditions"
 
-    fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, filename: String = "conditions.csv") {
+    /**
+     * Attempts to load conditions through a patient search.  Writes them to a file named "condition_mrn.json" and
+     * uploads them to the OCI experimentation bucket under the given timestamp.  If [loadObservations] is true, it will
+     * look for references to observations in the staging field and load them, too..  They'll be placed in a file named
+     * "observations_from_conditions_mrn.json".
+     */
+    fun load(
+        patientsByMrn: Map<String, Patient>,
+        tenant: Tenant,
+        timeStamp: String = System.currentTimeMillis().toString(),
+        loadObservations: Boolean = false
+    ) {
         logger.info { "Loading conditions" }
-        BufferedWriter(FileWriter(File(filename))).use { writer ->
-            writer.write(""""MRN","Condition FHIR ID","Category","Code System","Code","Display","Escaped JSON"""")
-            writer.newLine()
 
-            var totalTime: Long = 0
-            patientsByMrn.entries.forEachIndexed { index, (mrn, patient) ->
-                val executionTime = measureTimeMillis {
-                    val run = runCatching {
-                        loadAndWriteConditions(patient, tenant, "encounter-diagnosis", mrn, writer)
-                        loadAndWriteConditions(patient, tenant, "problem-list-item", mrn, writer)
-                    }
+        var totalTime: Long = 0
+        patientsByMrn.entries.forEachIndexed { index, (mrn, patient) ->
+            val totalConditions = mutableListOf<Condition>()
 
-                    if (run.isFailure) {
-                        val exception = run.exceptionOrNull()
-                        logger.error(exception) { "Error processing $mrn: ${exception?.message}" }
-                    }
+            val executionTime = measureTimeMillis {
+                val run = runCatching {
+                    totalConditions.addAll(
+                        loadConditions(patient, tenant, "encounter-diagnosis", mrn)
+                    )
+                    totalConditions.addAll(
+                        loadConditions(patient, tenant, "problem-list-item", mrn)
+                    )
                 }
 
-                totalTime += executionTime
-                logger.info { "Completed ${index + 1} of ${patientsByMrn.size}. Last took $executionTime ms. Current average: ${totalTime / (index + 1)}" }
+                if (run.isFailure) {
+                    val exception = run.exceptionOrNull()
+                    logger.error(exception) { "Error processing $mrn: ${exception?.message}" }
+                }
+
+                writeAndUploadConditions(tenant, mrn, totalConditions, timeStamp)
+
+                if (loadObservations) {
+                    val totalObservations = totalConditions
+                        .filter { condition ->
+                            condition.stage.any { it.assessment.isNotEmpty() }
+                        }
+                        .map { condition ->
+                            loadObservations(tenant, condition.id!!.value!!)
+                        }.flatten()
+                    writeAndUploadObservations(tenant, mrn, totalObservations, timeStamp)
+                }
             }
+
+            totalTime += executionTime
+            logger.info { "Completed ${index + 1} of ${patientsByMrn.size}. Last took $executionTime ms. Current average: ${totalTime / (index + 1)}" }
         }
+
         logger.info { "Done loading conditions" }
     }
 
-    private fun loadAndWriteConditions(
+    private fun loadConditions(
         patient: Patient,
         tenant: Tenant,
         category: String,
-        mrn: String,
-        writer: BufferedWriter
-    ) {
-        getConditionsForPatient(patient, tenant, category).entries.forEachIndexed { index, (key, value) ->
-            writeCondition(key, value, category, mrn, writer)
-
-            if (index % flushFrequency == 0) {
-                writer.flush()
-            }
-        }
+        mrn: String
+    ): List<Condition> {
+        logger.info { "Searching for $category for mrn $mrn" }
+        val conditions = conditionService.findConditions(tenant, patient.id!!.value!!, category, "active")
+        logger.info { "Found ${conditions.size} conditions for category $category" }
+        return conditions
     }
 
-    private fun getConditionsForPatient(patient: Patient, tenant: Tenant, category: String): Map<Code, Condition> =
-        conditionService.findConditions(tenant, patient.id!!.value!!, category, "active").mapNotNull {
-            it.code?.coding?.map { coding ->
-                Pair(
-                    Code(
-                        coding.system?.value ?: "",
-                        coding.code?.value ?: "",
-                        coding.display?.value ?: ""
-                    ),
-                    it
-                )
-            }
-        }.flatten().associate { it.first to it.second }
+    private fun loadObservations(tenant: Tenant, conditionId: String): List<Observation> {
+        logger.info { "Searching for observations referenced in condition $conditionId" }
+        val observations = observationService.findObservationsByCondition(tenant, conditionId)
+        logger.info { "${observations.size} observations found for $conditionId" }
+        return observations
+    }
 
-    private fun writeCondition(
-        code: Code,
-        condition: Condition,
-        category: String,
-        mrn: String,
-        writer: BufferedWriter
-    ) {
-        val json = JacksonManager.objectMapper.writeValueAsString(condition)
-        val escapedJson = StringEscapeUtils.escapeCsv(json)
-        writer.write(""""$mrn","${condition.id!!.value}","$category","${code.system}","${code.code}","${code.display}",$escapedJson""")
-        writer.newLine()
+    private fun writeAndUploadConditions(tenant: Tenant, mrn: String, conditions: List<Condition>, timeStamp: String) {
+        if (conditions.isEmpty()) return
+
+        val fileDirectory = "loaded/$resourceType"
+        val fileName = "$fileDirectory/$mrn.json"
+        runCatching { Paths.get(fileDirectory).createDirectory() }
+
+        logger.info { "Writing $fileName and uploading to OCI" }
+        writeFile(fileName, conditions)
+        uploadFile(fileName, tenant, resourceType, timeStamp)
+    }
+
+    private fun writeAndUploadObservations(tenant: Tenant, mrn: String, observations: List<Observation>, timeStamp: String) {
+        if (observations.isEmpty()) return
+
+        val fileDirectory = "loaded/observations_from_conditions_stage"
+        val fileName = "$fileDirectory/$mrn.json"
+        runCatching { Paths.get(fileDirectory).createDirectory() }
+
+        logger.info { "Writing $fileName and uploading to OCI" }
+        writeFile(fileName, observations)
+        uploadFile(fileName, tenant, "observations_from_conditions_stage", timeStamp)
+    }
+}
+
+class EpicObservationFromConditionService(epicClient: EpicClient) :
+    BaseEpicService<Observation>(epicClient) {
+    override val fhirURLSearchPart = "/api/FHIR/R4/Condition"
+    override val fhirResourceType = Observation::class.java
+
+    fun findObservationsByCondition(
+        tenant: Tenant,
+        conditionId: String
+    ): List<Observation> {
+        val parameters = mapOf(
+            "_id" to conditionId,
+            "_include" to "Condition:assessment"
+        )
+        return getResourceListFromSearch(tenant, parameters)
     }
 }

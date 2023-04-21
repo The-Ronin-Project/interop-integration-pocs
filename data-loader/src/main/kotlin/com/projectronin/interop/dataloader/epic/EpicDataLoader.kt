@@ -2,7 +2,8 @@ package com.projectronin.interop.dataloader.epic
 
 import com.projectronin.interop.common.http.spring.HttpSpringConfig
 import com.projectronin.interop.common.vendor.VendorType
-import com.projectronin.interop.dataloader.epic.resource.SkinnyDiagnosticReportDataLoader
+import com.projectronin.interop.dataloader.epic.resource.ConditionDataLoader
+import com.projectronin.interop.dataloader.epic.resource.ObservationDataLoader
 import com.projectronin.interop.ehr.auth.EHRAuthenticationBroker
 import com.projectronin.interop.ehr.epic.EpicPatientService
 import com.projectronin.interop.ehr.epic.auth.EpicAuthenticationService
@@ -17,6 +18,7 @@ import io.mockk.every
 import io.mockk.mockk
 import mu.KotlinLogging
 import java.nio.file.Paths
+import java.time.LocalDate
 import kotlin.io.path.createDirectory
 import kotlin.system.exitProcess
 import com.projectronin.interop.aidbox.PatientService as AidboxPatientService
@@ -52,8 +54,7 @@ class EpicDataLoader {
         fingerPrint = fingerPrint,
         privateKey = privateKey,
         namespace = namespace,
-        regionId = regionId,
-        experimentationBucket = "interop-poc-test"
+        regionId = regionId
     )
 
     private val epicAuthenticationService = EpicAuthenticationService(httpClient)
@@ -83,7 +84,21 @@ class EpicDataLoader {
         runCatching { Paths.get("loaded").createDirectory() }
 
         val patientsByMRN = getPatientsForMRNs(getMRNs())
-        SkinnyDiagnosticReportDataLoader(epicClient, expClient).load(patientsByMRN, tenant, timeStamp)
+
+        ObservationDataLoader(epicClient, expClient).load(
+            patientsByMRN,
+            tenant,
+            LocalDate.of(2022, 1, 1),
+            listOf(),
+            timeStamp
+        )
+
+        ConditionDataLoader(epicClient, expClient).load(
+            patientsByMRN,
+            tenant,
+            timeStamp,
+            true
+        )
     }
 
     private fun getMRNs(): Set<String> =
