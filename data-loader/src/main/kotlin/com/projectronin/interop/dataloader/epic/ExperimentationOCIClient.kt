@@ -33,7 +33,8 @@ class ExperimentationOCIClient(
      */
     fun uploadExport(tenant: Tenant, resourceType: String, fileName: String, timeStamp: String): Boolean {
         val fileNameOut = fileName.substringAfterLast('/', fileName)
-        val fileNameToUpload = "${tenant.name.lowercase()}_data_exploration/${resourceType.lowercase()}/$timeStamp/$fileNameOut"
+        val fileNameToUpload =
+            "${tenant.name.lowercase()}_data_exploration/${resourceType.lowercase()}/$timeStamp/$fileNameOut".replace(":", "-")
 
         return upload(experimentationBucket, fileNameToUpload, FileInputStream(fileName))
     }

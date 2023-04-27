@@ -1,6 +1,7 @@
 package com.projectronin.interop.dataloader.epic.resource
 
 import com.projectronin.interop.common.jackson.JacksonManager
+import com.projectronin.interop.dataloader.epic.ExperimentationOCIClient
 import com.projectronin.interop.dataloader.epic.resource.service.BaseEpicService
 import com.projectronin.interop.ehr.auth.EHRAuthenticationBroker
 import com.projectronin.interop.ehr.epic.client.EpicClient
@@ -20,7 +21,8 @@ import kotlin.io.path.createDirectories
 class DocumentReferenceDataLoader(
     epicClient: EpicClient,
     authenticationBroker: EHRAuthenticationBroker,
-    httpClient: HttpClient
+    httpClient: HttpClient,
+    private val expOCIClient: ExperimentationOCIClient
 ) {
     private val logger = KotlinLogging.logger { }
     private val documentReferenceService = EpicDocumentReferenceService(epicClient)
@@ -37,59 +39,79 @@ class DocumentReferenceDataLoader(
     private var statusCounts = mutableMapOf<String, Int>()
     private var docStatusCounts = mutableMapOf<String, Int>()
 
-    fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant) {
-        logger.info { "Loading DocumentReferences" }
-        val documentReferences = patientsByMrn.map { (_, patient) ->
-            documentReferenceService.getDocumentReferences(tenant, patient.id!!.value!!, clinicalNoteCategory) +
-                documentReferenceService.getDocumentReferences(tenant, patient.id!!.value!!, radiologyResultCategory)
-        }.flatten().toSet()
-
-        logger.info { "Writing ${documentReferences.size} document references to files." }
-
+    /**
+     * Loads document references via patient search, then attempts to download the attached documents.  Writes the
+     * document references to a file named "document_reference_mrn.json" and the individual attachments to files named
+     * "fhirId-binary#.extension".  FhirId is the id of the document reference, # is an index to make sure multiple
+     * attachments under the same document reference have different names, and extension is the file's extension.
+     */
+    fun load(
+        patientsByMrn: Map<String, Patient>,
+        tenant: Tenant,
+        timeStamp: String = System.currentTimeMillis().toString()
+    ) {
         runCatching { Paths.get("loaded/docRef/binary").createDirectories() }
 
-        documentReferences.forEach { docRef ->
-            increment(docRef.status!!.value!!, statusCounts)
-            docRef.docStatus?.value?.let { increment(it, docStatusCounts) }
+        patientsByMrn.map { (mrn, patient) ->
+            logger.info { "Loading DocumentReferences for MRN: $mrn" }
+            val documentReferences = documentReferenceService.getDocumentReferences(tenant, patient.id!!.value!!)
 
-            docRef.content.forEachIndexed { index, content ->
-                totalAttachments++
+            val docRefFileName = "loaded/docRef/document_reference_$mrn.json"
+            BufferedWriter(FileWriter(File(docRefFileName))).use { writer ->
+                writer.write(JacksonManager.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(documentReferences))
+            }
+            expOCIClient.uploadExport(tenant, "document_reference", docRefFileName, timeStamp)
 
-                val attachment = content.attachment!!
-                attachment.data?.value?.let { totalDatas++ } ?: attachment.url?.value?.let {
-                    totalUrls++
-                    if (it.startsWith("Binary/")) {
-                        totalBinaries++
+            logger.info { "Writing ${documentReferences.size} document references to files." }
+            documentReferences.forEachIndexed { docIndex, docRef ->
+                increment(docRef.status!!.value!!, statusCounts)
+                docRef.docStatus?.value?.let { increment(it, docStatusCounts) }
 
-                        when (attachment.contentType?.value) {
-                            "text/plain" -> "txt"
-                            "text/html" -> "html"
-                            "application/pdf" -> "pdf"
-                            else -> null
-                        }?.let { extension ->
-                            val file = File("loaded/docRef/binary/${docRef.id!!.value!!}-binary$index.$extension")
-                            val binaryFhirId = it.removePrefix("Binary/")
+                docRef.content.forEachIndexed { contentIndex, content ->
+                    totalAttachments++
 
-                            if (extension == "pdf") {
-                                binaryService.getBinary(tenant, binaryFhirId)?.let { binary ->
-                                    val binaryBytes = Base64.getDecoder().decode(binary.data!!.value!!)
-                                    FileOutputStream(file).use { writer ->
-                                        writer.write(binaryBytes)
+                    val attachment = content.attachment!!
+                    attachment.data?.value?.let { totalDatas++ } ?: attachment.url?.value?.let {
+                        totalUrls++
+                        if (it.startsWith("Binary/")) {
+                            totalBinaries++
+
+                            when (attachment.contentType?.value) {
+                                "text/plain" -> "txt"
+                                "text/html" -> "html"
+                                "application/pdf" -> "pdf"
+                                "text/rtf" -> "rtf"
+                                "image/jpeg" -> "jpg"
+                                "application/octet-stream" -> null // Not totally sure what to do with this one
+                                else -> null
+                            }?.let { extension ->
+                                val binaryFileName = "loaded/docRef/binary/${docRef.id!!.value!!}-binary$contentIndex.$extension"
+                                val file = File(binaryFileName)
+                                val binaryFhirId = it.removePrefix("Binary/")
+
+                                if (listOf("pdf", "jpg").contains(extension)) {
+                                    binaryService.getBinary(tenant, binaryFhirId)?.let { binary ->
+                                        val binaryBytes = Base64.getDecoder().decode(binary.data!!.value!!)
+                                        FileOutputStream(file).use { writer ->
+                                            writer.write(binaryBytes)
+                                        }
+                                    }
+                                } else {
+                                    val binary = binaryService.getBinaryData(tenant, binaryFhirId)
+                                    BufferedWriter(FileWriter(file)).use { writer ->
+                                        writer.write(binary)
                                     }
                                 }
-                            } else {
-                                val binary = binaryService.getBinaryData(tenant, binaryFhirId)
-                                BufferedWriter(FileWriter(file)).use { writer ->
-                                    writer.write(binary)
+
+                                if (file.exists()) {
+                                    expOCIClient.uploadExport(tenant, "binary", binaryFileName, timeStamp)
                                 }
-                            }
+                            } ?: logger.warn { "Attachment content type we're not prepared to handle: ${attachment.contentType?.value}" }
                         }
                     }
+                    attachment.contentType?.value?.let { increment(it, contentTypeCounts) }
                 }
-                attachment.contentType?.value?.let { increment(it, contentTypeCounts) }
-            }
-            BufferedWriter(FileWriter(File("loaded/docRef/${docRef.id!!.value!!}.json"))).use { writer ->
-                writer.write(JacksonManager.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(docRef))
+                logger.info { "Retrieved doc ${docIndex + 1} of ${documentReferences.size}" }
             }
         }
 
@@ -121,8 +143,12 @@ class EpicDocumentReferenceService(epicClient: EpicClient) : BaseEpicService<Doc
     override val fhirURLSearchPart = "/api/FHIR/R4/DocumentReference"
     override val fhirResourceType = DocumentReference::class.java
 
-    fun getDocumentReferences(tenant: Tenant, patientFhirId: String, category: String): List<DocumentReference> {
-        val parameters = mapOf("patient" to patientFhirId, "category" to category)
+    fun getDocumentReferences(tenant: Tenant, patientFhirId: String, category: String? = null): List<DocumentReference> {
+        val parameters = buildMap {
+            put("patient", patientFhirId)
+            category?.let { put("category", category) }
+        }
+
         return getResourceListFromSearch(tenant, parameters)
     }
 }
