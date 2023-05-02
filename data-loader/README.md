@@ -5,8 +5,42 @@ while the current standard involves posting data to OCI Buckets that others can 
 
 # Setup
 
-TBD
+### To begin with, the following environment variables need to be set on your local system.
 
+_These values can be found by pulling the tenant config for the tenant and EHR that you're trying to connect to._\
+LOAD_MRN_SYSTEM\
+LOAD_CLIENT_ID\
+LOAD_SERVICE_ENDPOINT\
+LOAD_AUTH_ENDPOINT\
+LOAD_PRIVATE_KEY
+
+_These values can be found in the HashiCorp Vault, [here](https://vault.devops.projectronin.io:8200/ui/vault/secrets/interop-mirth-connector/show/prod), under the interop-mirth-connector/prod folder._\
+LOAD_OCI_NAMESPACE\
+LOAD_OCI_TENANCY_OCID\
+LOAD_OCI_USER_OCID\
+LOAD_OCI_FINGERPRINT\
+LOAD_OCI_REGION_ID\
+LOAD_OCI_PRIVATE_KEY
+
+Once the above variables are setup, modify the ```load()``` function in EpicDataLoader.kt to call whichever data loader you're interested in.  For example, to call the DocumentReference data loader look at the block of code below.
+Also, make sure that the dataloader you want to use has been updated to send its files to OCI in the format the Data Platform team wants.  If it hasn't, you'll have to update it, too.
+```
+fun load() {
+     val timeStamp = System.currentTimeMillis().toString()
+     runCatching { Paths.get("loaded").createDirectory() }
+
+     val patientsByMRN = getPatientsForMRNs(getMRNs())
+
+     DocumentReferenceDataLoader(epicClient, ehrAuthenticationBroker, httpClient, expClient).load(
+         patientsByMRN,
+         tenant,
+         timeStamp
+     )
+}
+```
+Next, in the resources folder, update _mrns.txt_ with a list of mrns you're interested in loading data for.  If you don't have any and you're interested in PSJ patients, you can pull some from [this](https://docs.google.com/spreadsheets/d/1o9Kl0uZ5rAxra_t1C598CPtVbi_GJdTd2sSnKsm35jI/edit#gid=490983879) Google sheet.
+
+Last but not least, click the run button next to ```fun main()```, then just sit back and watch the magic happen!
 # Verifying Data
 
 The following steps can be used to verify that the data was properly loaded into the OCI data lake.
