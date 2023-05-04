@@ -2,7 +2,7 @@ package com.projectronin.interop.dataloader.epic
 
 import com.projectronin.interop.common.http.spring.HttpSpringConfig
 import com.projectronin.interop.common.vendor.VendorType
-import com.projectronin.interop.dataloader.epic.resource.DocumentReferenceDataLoader
+import com.projectronin.interop.dataloader.epic.resource.SkinnyDiagnosticReportDataLoader
 import com.projectronin.interop.ehr.auth.EHRAuthenticationBroker
 import com.projectronin.interop.ehr.epic.EpicPatientService
 import com.projectronin.interop.ehr.epic.auth.EpicAuthenticationService
@@ -83,7 +83,7 @@ class EpicDataLoader {
 
         val patientsByMRN = getPatientsForMRNs(getMRNs())
 
-        DocumentReferenceDataLoader(epicClient, ehrAuthenticationBroker, httpClient, expClient).load(
+        SkinnyDiagnosticReportDataLoader(epicClient, expClient).load(
             patientsByMRN,
             tenant,
             timeStamp

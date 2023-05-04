@@ -22,8 +22,8 @@ class SkinnyDiagnosticReportDataLoader(epicClient: EpicClient, private val expOC
     fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, timeStamp: String) {
         logger.info { "Loading dx reports" }
 
-        patientsByMrn.map { (mrn, patient) ->
-            logger.info { "Getting reports for MRN $mrn" }
+        patientsByMrn.entries.mapIndexed { index, (mrn, patient) ->
+            logger.info { "Getting reports for MRN $mrn (${index + 1} of ${patientsByMrn.size})" }
             val fileName = "loaded/diagnostic_report_$mrn.json"
 
             val dxReports = epicDiagnosticReportService.getDiagnosticReportsByPatient(tenant, patient.id!!.value!!)
