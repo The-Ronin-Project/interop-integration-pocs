@@ -1,7 +1,7 @@
-package com.projectronin.interop.dataloader.epic.resource
+package com.projectronin.interop.dataloader.epic
 
 import com.projectronin.interop.common.jackson.JacksonManager
-import com.projectronin.interop.dataloader.epic.resource.service.BaseEpicService
+import com.projectronin.interop.dataloader.epic.service.MedicationRequestService
 import com.projectronin.interop.ehr.epic.EpicMedicationService
 import com.projectronin.interop.ehr.epic.EpicMedicationStatementService
 import com.projectronin.interop.ehr.epic.client.EpicClient
@@ -12,19 +12,18 @@ import com.projectronin.interop.fhir.r4.resource.MedicationRequest
 import com.projectronin.interop.fhir.r4.resource.MedicationStatement
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.tenant.config.model.Tenant
-import mu.KotlinLogging
 import org.apache.commons.text.StringEscapeUtils
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import kotlin.system.measureTimeMillis
 
-class MedicationDataLoader(epicClient: EpicClient) {
-    private val logger = KotlinLogging.logger { }
+class MedicationDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
     private val medicationService = EpicMedicationService(epicClient, 5)
     private val medicationStatementService = EpicMedicationStatementService(epicClient)
-    private val medicationRequestService = EpicMedicationRequestService(epicClient)
-
+    private val medicationRequestService = MedicationRequestService(epicClient)
+    override val jira = "Prior to paradigm change"
+    override fun main() = TODO("Prior to paradigm change")
     fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, filename: String = "medications.csv") {
         val allPatients = patientsByMrn.values
         val allMedicationIds = mutableSetOf<String>()
@@ -154,19 +153,5 @@ class MedicationDataLoader(epicClient: EpicClient) {
         val escapedJson = StringEscapeUtils.escapeCsv(json)
         writer.write(""""${medication.id!!.value}",$escapedJson""")
         writer.newLine()
-    }
-}
-
-class EpicMedicationRequestService(epicClient: EpicClient) :
-    BaseEpicService<MedicationRequest>(epicClient) {
-    override val fhirURLSearchPart = "/api/FHIR/R4/MedicationRequest"
-    override val fhirResourceType = MedicationRequest::class.java
-
-    fun getMedicationRequestsByPatientFHIRId(
-        tenant: Tenant,
-        patientFHIRId: String
-    ): List<MedicationRequest> {
-        val parameters = mapOf("patient" to patientFHIRId)
-        return getResourceListFromSearch(tenant, parameters)
     }
 }

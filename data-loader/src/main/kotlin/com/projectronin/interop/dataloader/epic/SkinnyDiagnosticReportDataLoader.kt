@@ -1,11 +1,10 @@
-package com.projectronin.interop.dataloader.epic.resource
+package com.projectronin.interop.dataloader.epic
 
 import com.projectronin.interop.common.jackson.JacksonManager
-import com.projectronin.interop.dataloader.epic.ExperimentationOCIClient
+import com.projectronin.interop.dataloader.epic.service.DiagnosticReportService
 import com.projectronin.interop.ehr.epic.client.EpicClient
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.tenant.config.model.Tenant
-import mu.KotlinLogging
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -15,10 +14,10 @@ import java.io.FileWriter
  * Writes them to a file named "diagnostic_report_mrn.json" and uploads them to the OCI experimentation bucket
  * under the given timestamp.
  */
-class SkinnyDiagnosticReportDataLoader(epicClient: EpicClient, private val expOCIClient: ExperimentationOCIClient) {
-    private val logger = KotlinLogging.logger { }
-    private val epicDiagnosticReportService = EpicDiagnosticReportService(epicClient)
-
+class SkinnyDiagnosticReportDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
+    private val epicDiagnosticReportService = DiagnosticReportService(epicClient)
+    override val jira = "Prior to paradigm change"
+    override fun main() = TODO("Prior to paradigm change")
     fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, timeStamp: String) {
         logger.info { "Loading dx reports" }
 

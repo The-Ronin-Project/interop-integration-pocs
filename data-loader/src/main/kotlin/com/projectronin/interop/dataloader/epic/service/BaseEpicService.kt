@@ -1,4 +1,4 @@
-package com.projectronin.interop.dataloader.epic.resource.service
+package com.projectronin.interop.dataloader.epic.service
 
 import com.projectronin.interop.ehr.epic.client.EpicClient
 import com.projectronin.interop.fhir.r4.mergeBundles
@@ -100,6 +100,13 @@ abstract class BaseEpicService<T : Resource<T>>(val epicClient: EpicClient) {
     fun searchByID(tenant: Tenant, resourceFHIRId: String): T {
         return runBlocking {
             epicClient.get(tenant, "$fhirURLSearchPart?_id=$resourceFHIRId")
+                .body(TypeInfo(fhirResourceType.kotlin, fhirResourceType))
+        }
+    }
+
+    fun getByID(tenant: Tenant, resourceFHIRId: String): T {
+        return runBlocking {
+            epicClient.get(tenant, "$fhirURLSearchPart/$resourceFHIRId")
                 .body(TypeInfo(fhirResourceType.kotlin, fhirResourceType))
         }
     }

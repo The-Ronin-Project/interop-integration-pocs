@@ -1,25 +1,21 @@
-package com.projectronin.interop.dataloader.epic.resource
+package com.projectronin.interop.dataloader.epic
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.projectronin.interop.common.jackson.JacksonManager
-import com.projectronin.interop.ehr.epic.apporchard.model.IDType
+import com.projectronin.interop.dataloader.epic.service.GetPatientStagingResponse
+import com.projectronin.interop.dataloader.epic.service.StagingReportService
 import com.projectronin.interop.ehr.epic.client.EpicClient
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.tenant.config.model.Tenant
-import io.ktor.client.call.body
-import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
 import org.apache.commons.text.StringEscapeUtils
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import kotlin.system.measureTimeMillis
 
-class StagingDataLoader(epicClient: EpicClient) {
-    private val logger = KotlinLogging.logger { }
-    private val stagingReportService = EpicStagingReportService(epicClient)
-
+class StagingDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
+    private val stagingReportService = StagingReportService(epicClient)
+    override val jira = "Prior to paradigm change"
+    override fun main() = TODO("Prior to paradigm change")
     fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, filename: String = "staging.csv"): Map<String, Patient> {
         logger.info { "Loading staging reports" }
 
@@ -136,66 +132,3 @@ class StagingDataLoader(epicClient: EpicClient) {
         }
     }
 }
-
-class EpicStagingReportService(private val epicClient: EpicClient) {
-    private val stagingSearchUrlPart = "/api/epic/2018/Clinical/Oncology/GetPatientStagingDataEpic/Clinical/Oncology/Staging/GetPatientData/false"
-
-    fun getStagingReportsByPatient(tenant: Tenant, mrn: String): GetPatientStagingResponse {
-        val request = GetPatientStagingRequest(
-            signedOnly = false,
-            patientId = IDType(
-                id = mrn,
-                type = "ORCA MRN"
-            ),
-            auditUserId = IDType(
-                id = "",
-                type = ""
-            )
-        )
-
-        return runBlocking {
-            val httpResponse = epicClient.post(tenant, stagingSearchUrlPart, request)
-            httpResponse.body()
-        }
-    }
-}
-
-data class GetPatientStagingRequest(
-    val signedOnly: Boolean? = false,
-    val patientId: IDType,
-    val auditUserId: IDType
-)
-
-@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
-data class GetPatientStagingResponse(
-    val stages: List<PatientStage> = listOf()
-)
-
-@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
-data class PatientStage(
-    val classification: String?,
-    val problemDescription: String,
-    val problemID: String,
-    val stagingMethod: String?,
-    val tValue: String?,
-    val nValue: String?,
-    val mValue: String?,
-    val stageGroup: String?,
-    val stageModifier: String?,
-    val eRStatus: String?,
-    val pRStatus: String?,
-    val hER2Status: String?,
-    val stageDate: String?,
-    val signStatus: Boolean?,
-    val diagnosisDate: String?,
-    val diagnosisCodeSet: String?,
-    val diagnosisCode: String?,
-    val histologicGrade: HistologicGrade?
-)
-
-@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
-data class HistologicGrade(
-    val grade: String?,
-    val system: String?,
-    val method: String?
-)

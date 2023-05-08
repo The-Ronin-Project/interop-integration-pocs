@@ -1,4 +1,4 @@
-package com.projectronin.interop.dataloader.epic
+package com.projectronin.interop.dataloader.oci
 
 import com.projectronin.interop.datalake.oci.client.OCIClient
 import com.projectronin.interop.tenant.config.model.Tenant
@@ -22,6 +22,26 @@ class ExperimentationOCIClient(
     datalakeBucket = "",
     regionId = regionId
 ) {
+    companion object {
+        fun fromEnvironmentVariables(): ExperimentationOCIClient {
+            // Values can be found in Vault mirth-connector when setting up your environment
+            val namespace: String = System.getenv("LOAD_OCI_NAMESPACE")
+            val tenancyOCID: String = System.getenv("LOAD_OCI_TENANCY_OCID")
+            val userOCID: String = System.getenv("LOAD_OCI_USER_OCID")
+            val fingerPrint: String = System.getenv("LOAD_OCI_FINGERPRINT")
+            val regionId: String = System.getenv("LOAD_OCI_REGION_ID")
+            val privateKey: String = System.getenv("LOAD_OCI_PRIVATE_KEY")
+            return ExperimentationOCIClient(
+                tenancyOCID = tenancyOCID,
+                userOCID = userOCID,
+                fingerPrint = fingerPrint,
+                privateKey = privateKey,
+                namespace = namespace,
+                regionId = regionId
+            )
+        }
+    }
+
     /**
      * Uploads the file named in [fileName] to the experimentation OCI bucket under the given [tenant]
      * and [resourceType].  [resourceType] will usually be a FHIR resource type, but doesn't have to be.  DP is usually

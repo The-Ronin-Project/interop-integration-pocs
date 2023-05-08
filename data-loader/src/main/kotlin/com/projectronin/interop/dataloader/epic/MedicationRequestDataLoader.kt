@@ -1,19 +1,19 @@
-package com.projectronin.interop.dataloader.epic.resource
+package com.projectronin.interop.dataloader.epic
 import com.projectronin.interop.common.jackson.JacksonManager
+import com.projectronin.interop.dataloader.epic.service.MedicationRequestService
 import com.projectronin.interop.ehr.epic.client.EpicClient
 import com.projectronin.interop.fhir.r4.resource.MedicationRequest
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.tenant.config.model.Tenant
-import mu.KotlinLogging
 import org.apache.commons.text.StringEscapeUtils
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import kotlin.system.measureTimeMillis
-class MedicationRequestDataLoader(epicClient: EpicClient) {
-    private val logger = KotlinLogging.logger { }
-    private val medicationRequestService = EpicMedicationRequestService(epicClient)
-
+class MedicationRequestDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
+    private val medicationRequestService = MedicationRequestService(epicClient)
+    override val jira = "Prior to paradigm change"
+    override fun main() = TODO("Prior to paradigm change")
     fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, filename: String = "medicationRequests.csv") {
         BufferedWriter(FileWriter(File(filename))).use { writer ->
             writer.write(""""Medication Request FHIR ID",,"Escaped JSON"""")

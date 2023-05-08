@@ -9,12 +9,20 @@ while the current standard involves posting data to OCI Buckets that others can 
 
 _These values can be found by pulling the tenant config for the tenant and EHR that you're trying to connect to._\
 LOAD_MRN_SYSTEM\
-LOAD_CLIENT_ID\
 LOAD_SERVICE_ENDPOINT\
-LOAD_AUTH_ENDPOINT\
-LOAD_PRIVATE_KEY
+LOAD_AUTH_ENDPOINT
 
-_These values can be found in the HashiCorp Vault, [here](https://vault.devops.projectronin.io:8200/ui/vault/secrets/interop-mirth-connector/show/prod), under the interop-mirth-connector/prod folder._\
+_Depending on if you're running for an Epic or Cerner client you'll also need_\
+_Epic_\
+LOAD_CLIENT_ID\
+LOAD_PRIVATE_KEY\
+_Cerner_\
+LOAD_ACCOUNT_ID\
+LOAD_SECRET
+
+
+_These values can be found in the HashiCorp Vault, [here](https://vault.devops.projectronin.io:8200/ui/vault/secrets/interop-mirth-connector/show/prod),
+under the interop-mirth-connector/prod folder._\
 LOAD_OCI_NAMESPACE\
 LOAD_OCI_TENANCY_OCID\
 LOAD_OCI_USER_OCID\
@@ -22,25 +30,13 @@ LOAD_OCI_FINGERPRINT\
 LOAD_OCI_REGION_ID\
 LOAD_OCI_PRIVATE_KEY
 
-Once the above variables are setup, modify the ```load()``` function in EpicDataLoader.kt to call whichever data loader you're interested in.  For example, to call the DocumentReference data loader look at the block of code below.
-Also, make sure that the dataloader you want to use has been updated to send its files to OCI in the format the Data Platform team wants.  If it hasn't, you'll have to update it, too.
-```
-fun load() {
-     val timeStamp = System.currentTimeMillis().toString()
-     runCatching { Paths.get("loaded").createDirectory() }
+Once the above variables are setup, create a new dataloader via extending `BaseEpicDataLoader` or `BaseCernerDataLoader`.
+You'll need to write a `main()` function which will retrieve the data needed, and collate or format is needed before loading it to OCI.
+Services in the `service` folder should be be able to be re-used by future data loaders, so avoid putting too much logic there.
 
-     val patientsByMRN = getPatientsForMRNs(getMRNs())
+If needed, in the resources folder, update _mrns.txt_ with a list of mrns you're interested in loading data for.  If you don't have any and you're interested in PSJ patients, you can pull some from [this](https://docs.google.com/spreadsheets/d/1o9Kl0uZ5rAxra_t1C598CPtVbi_GJdTd2sSnKsm35jI/edit#gid=490983879) Google sheet.
 
-     DocumentReferenceDataLoader(epicClient, ehrAuthenticationBroker, httpClient, expClient).load(
-         patientsByMRN,
-         tenant,
-         timeStamp
-     )
-}
-```
-Next, in the resources folder, update _mrns.txt_ with a list of mrns you're interested in loading data for.  If you don't have any and you're interested in PSJ patients, you can pull some from [this](https://docs.google.com/spreadsheets/d/1o9Kl0uZ5rAxra_t1C598CPtVbi_GJdTd2sSnKsm35jI/edit#gid=490983879) Google sheet.
-
-Last but not least, click the run button next to ```fun main()```, then just sit back and watch the magic happen!
+Last but not least, click the run button next to ```fun main()``` in your data loader, then just sit back and watch the magic happen!
 # Verifying Data
 
 The following steps can be used to verify that the data was properly loaded into the OCI data lake.

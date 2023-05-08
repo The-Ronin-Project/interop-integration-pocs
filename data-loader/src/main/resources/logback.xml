@@ -11,10 +11,11 @@
     <logger name="com.projectronin.interop.dataloader" level="DEBUG" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
-    <!-- Uncomment to have our packages log more aggressively
-    <logger name="io.ktor" level="DEBUG" additivity="false">
+    <logger name="io.ktor" level="WARN" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
+    <!-- Uncomment to have our packages log more aggressively
+
     <logger name="com.projectronin.interop" level="DEBUG" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>

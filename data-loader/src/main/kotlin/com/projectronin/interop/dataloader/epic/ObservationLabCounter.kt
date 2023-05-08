@@ -1,11 +1,10 @@
-package com.projectronin.interop.dataloader.epic.resource
+package com.projectronin.interop.dataloader.epic
 
-import com.projectronin.interop.dataloader.epic.Code
+import com.projectronin.interop.dataloader.epic.service.ObservationService
 import com.projectronin.interop.ehr.epic.client.EpicClient
 import com.projectronin.interop.fhir.r4.resource.Observation
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.tenant.config.model.Tenant
-import mu.KotlinLogging
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -15,10 +14,10 @@ import kotlin.system.measureTimeMillis
     This is here to count the total number of LAB and laboratory observations by patient.  Could probably be combined
     with the regular observation loader if we ever need to use this stuff again.
  */
-class ObservationLabCounter(epicClient: EpicClient) {
-    private val logger = KotlinLogging.logger { }
-    private val observationService = EpicDateLimitedObservationService(epicClient)
-
+class ObservationLabCounter(epicClient: EpicClient) : BaseEpicDataLoader() {
+    private val observationService = ObservationService(epicClient)
+    override val jira = "Prior to paradigm change"
+    override fun main() = TODO("Prior to paradigm change")
     fun load(
         patientsByMrn: Map<String, Patient>,
         tenant: Tenant,
@@ -81,17 +80,16 @@ class ObservationLabCounter(epicClient: EpicClient) {
         tenant: Tenant,
         category: String
     ): Map<Code, Observation> =
-        observationService.findObservationsByPatient(tenant, listOf(patient.id!!.value!!), listOf(category), null)
-            .mapNotNull {
-                it.code?.coding?.map { coding ->
-                    Pair(
-                        Code(
-                            coding.system?.value ?: "",
-                            coding.code?.value ?: "",
-                            coding.display?.value ?: ""
-                        ),
-                        it
-                    )
-                }
-            }.flatten().associate { it.first to it.second }
+        observationService.findObservationsByPatient(tenant, listOf(patient.id!!.value!!), listOf(category), null).mapNotNull {
+            it.code?.coding?.map { coding ->
+                Pair(
+                    Code(
+                        coding.system?.value ?: "",
+                        coding.code?.value ?: "",
+                        coding.display?.value ?: ""
+                    ),
+                    it
+                )
+            }
+        }.flatten().associate { it.first to it.second }
 }

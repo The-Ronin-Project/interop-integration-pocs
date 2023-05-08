@@ -1,12 +1,11 @@
-package com.projectronin.interop.dataloader.epic.resource
+package com.projectronin.interop.dataloader.epic
 
 import com.projectronin.interop.common.jackson.JacksonManager
-import com.projectronin.interop.dataloader.epic.resource.service.BaseEpicService
+import com.projectronin.interop.dataloader.epic.service.ConditionBundleService
 import com.projectronin.interop.ehr.epic.client.EpicClient
 import com.projectronin.interop.fhir.r4.resource.Bundle
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.tenant.config.model.Tenant
-import mu.KotlinLogging
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -20,10 +19,10 @@ import kotlin.system.measureTimeMillis
     staging data.  They literally want us to include every bundle with the string "stage": in it to avoid potentially
     missing anything.
  */
-class StagingByConditionDataLoader(epicClient: EpicClient) {
-    private val logger = KotlinLogging.logger { }
-    private val observationConditionService = EpicObservationConditionService(epicClient)
-
+class StagingByConditionDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
+    private val observationConditionService = ConditionBundleService(epicClient)
+    override val jira = "Prior to paradigm change"
+    override fun main() = TODO("Prior to paradigm change")
     fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant) {
         logger.info { "Loading staging observations through conditions" }
         var totalTime: Long = 0
@@ -64,26 +63,5 @@ class StagingByConditionDataLoader(epicClient: EpicClient) {
                 writer.write(json)
             }
         }
-    }
-}
-
-// Pulls observations through the condition service
-class EpicObservationConditionService(epicClient: EpicClient) :
-    BaseEpicService<Bundle>(epicClient) {
-    override val fhirURLSearchPart = "/api/FHIR/R4/Condition"
-    override val fhirResourceType = Bundle::class.java
-
-    fun findConditionsAndObservations(
-        tenant: Tenant,
-        patientFhirId: String
-    ): Bundle {
-        val parameters = mapOf(
-            "patient" to patientFhirId,
-            "category" to "problem-list-item",
-            "clinical-status" to "active",
-            "_include" to "Condition:Observation"
-        )
-
-        return getBundleWithPaging(tenant, parameters)
     }
 }

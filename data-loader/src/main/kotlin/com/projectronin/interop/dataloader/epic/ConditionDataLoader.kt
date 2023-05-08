@@ -1,26 +1,24 @@
-package com.projectronin.interop.dataloader.epic.resource
+package com.projectronin.interop.dataloader.epic
 
-import com.projectronin.interop.dataloader.epic.ExperimentationOCIClient
-import com.projectronin.interop.dataloader.epic.resource.service.BaseEpicService
+import com.projectronin.interop.dataloader.epic.service.ObservationViaConditionService
 import com.projectronin.interop.ehr.epic.EpicConditionService
 import com.projectronin.interop.ehr.epic.client.EpicClient
 import com.projectronin.interop.fhir.r4.resource.Condition
 import com.projectronin.interop.fhir.r4.resource.Observation
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.tenant.config.model.Tenant
-import mu.KotlinLogging
 import java.nio.file.Paths
 import kotlin.io.path.createDirectory
 import kotlin.system.measureTimeMillis
 
 class ConditionDataLoader(
-    epicClient: EpicClient,
-    expOCIClient: ExperimentationOCIClient
-) : BaseLoader(expOCIClient) {
-    private val logger = KotlinLogging.logger { }
+    epicClient: EpicClient
+) : BaseEpicDataLoader() {
     private val conditionService = EpicConditionService(epicClient)
-    private val observationService = EpicObservationFromConditionService(epicClient)
+    private val observationService = ObservationViaConditionService(epicClient)
     private val resourceType = "conditions"
+    override val jira = "Prior to paradigm change"
+    override fun main() = TODO("Prior to paradigm change")
 
     /**
      * Attempts to load conditions through a patient search.  Writes them to a file named "condition_mrn.json" and
@@ -117,22 +115,5 @@ class ConditionDataLoader(
         logger.info { "Writing $fileName and uploading to OCI" }
         writeFile(fileName, observations)
         uploadFile(fileName, tenant, "observations_from_conditions_stage", timeStamp)
-    }
-}
-
-class EpicObservationFromConditionService(epicClient: EpicClient) :
-    BaseEpicService<Observation>(epicClient) {
-    override val fhirURLSearchPart = "/api/FHIR/R4/Condition"
-    override val fhirResourceType = Observation::class.java
-
-    fun findObservationsByCondition(
-        tenant: Tenant,
-        conditionId: String
-    ): List<Observation> {
-        val parameters = mapOf(
-            "_id" to conditionId,
-            "_include" to "Condition:assessment"
-        )
-        return getResourceListFromSearch(tenant, parameters)
     }
 }

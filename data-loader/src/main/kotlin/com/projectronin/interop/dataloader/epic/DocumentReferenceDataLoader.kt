@@ -1,15 +1,13 @@
-package com.projectronin.interop.dataloader.epic.resource
+package com.projectronin.interop.dataloader.epic
 
 import com.projectronin.interop.common.jackson.JacksonManager
-import com.projectronin.interop.dataloader.epic.ExperimentationOCIClient
-import com.projectronin.interop.dataloader.epic.resource.service.BaseEpicService
+import com.projectronin.interop.dataloader.epic.service.BinaryService
+import com.projectronin.interop.dataloader.epic.service.DocumentReferenceService
 import com.projectronin.interop.ehr.auth.EHRAuthenticationBroker
 import com.projectronin.interop.ehr.epic.client.EpicClient
-import com.projectronin.interop.fhir.r4.resource.DocumentReference
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.tenant.config.model.Tenant
 import io.ktor.client.HttpClient
-import mu.KotlinLogging
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileOutputStream
@@ -21,12 +19,12 @@ import kotlin.io.path.createDirectories
 class DocumentReferenceDataLoader(
     epicClient: EpicClient,
     authenticationBroker: EHRAuthenticationBroker,
-    httpClient: HttpClient,
-    private val expOCIClient: ExperimentationOCIClient
-) {
-    private val logger = KotlinLogging.logger { }
-    private val documentReferenceService = EpicDocumentReferenceService(epicClient)
-    private val binaryService = EpicBinaryService(epicClient, authenticationBroker, httpClient)
+    httpClient: HttpClient
+) : BaseEpicDataLoader() {
+    private val documentReferenceService = DocumentReferenceService(epicClient)
+    private val binaryService = BinaryService(epicClient, authenticationBroker, httpClient)
+    override val jira = "Prior to paradigm change"
+    override fun main() = TODO("Prior to paradigm change")
 
     private val clinicalNoteCategory = "clinical-note"
     private val radiologyResultCategory = "imaging-result"
@@ -136,19 +134,5 @@ class DocumentReferenceDataLoader(
 
     private fun increment(value: String, map: MutableMap<String, Int>) {
         map[value] = 1 + (map[value] ?: 0)
-    }
-}
-
-class EpicDocumentReferenceService(epicClient: EpicClient) : BaseEpicService<DocumentReference>(epicClient) {
-    override val fhirURLSearchPart = "/api/FHIR/R4/DocumentReference"
-    override val fhirResourceType = DocumentReference::class.java
-
-    fun getDocumentReferences(tenant: Tenant, patientFhirId: String, category: String? = null): List<DocumentReference> {
-        val parameters = buildMap {
-            put("patient", patientFhirId)
-            category?.let { put("category", category) }
-        }
-
-        return getResourceListFromSearch(tenant, parameters)
     }
 }

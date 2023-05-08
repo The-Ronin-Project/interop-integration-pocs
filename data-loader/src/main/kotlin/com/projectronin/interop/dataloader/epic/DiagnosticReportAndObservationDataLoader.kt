@@ -1,13 +1,13 @@
-package com.projectronin.interop.dataloader.epic.resource
+package com.projectronin.interop.dataloader.epic
 
 import com.projectronin.interop.common.jackson.JacksonManager
-import com.projectronin.interop.dataloader.epic.resource.service.BaseEpicService
+import com.projectronin.interop.dataloader.epic.service.DiagnosticReportBundleService
+import com.projectronin.interop.dataloader.epic.service.ObservationBundleService
 import com.projectronin.interop.ehr.epic.client.EpicClient
 import com.projectronin.interop.fhir.r4.resource.Bundle
 import com.projectronin.interop.fhir.r4.resource.DiagnosticReport
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.tenant.config.model.Tenant
-import mu.KotlinLogging
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -21,10 +21,11 @@ import kotlin.system.measureTimeMillis
     often, so switched to pulling them in separate queries.  This makes things take MUCH longer, but it works.  There
     aren't any more failures, but we average about 8 minutes per patient.
  */
-class DiagnosticReportAndObservationDataLoader(epicClient: EpicClient) {
-    private val logger = KotlinLogging.logger { }
-    private val diagnosticReportService = EpicDiagnosticReportObservationService(epicClient)
-    private val observationService = EpicObservationServiceBundle(epicClient)
+class DiagnosticReportAndObservationDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
+    private val diagnosticReportService = DiagnosticReportBundleService(epicClient)
+    private val observationService = ObservationBundleService(epicClient)
+    override val jira = "Prior to paradigm change"
+    override fun main() = TODO("Prior to paradigm change")
 
     fun load(
         patientsByMrn: Map<String, Patient>,
@@ -84,23 +85,4 @@ class DiagnosticReportAndObservationDataLoader(epicClient: EpicClient) {
             writer.flush()
         }
     }
-}
-
-class EpicDiagnosticReportObservationService(epicClient: EpicClient) : BaseEpicService<Bundle>(epicClient) {
-    override val fhirURLSearchPart = "/api/FHIR/R4/DiagnosticReport"
-    override val fhirResourceType = Bundle::class.java
-
-    fun getDiagnosticReportsByPatient(tenant: Tenant, patientFhirId: String): Bundle {
-        val parameters = mapOf(
-            "patient" to patientFhirId
-        )
-        return getBundleWithPaging(tenant, parameters)
-    }
-}
-
-class EpicObservationServiceBundle(epicClient: EpicClient) : BaseEpicService<Bundle>(epicClient) {
-    override val fhirURLSearchPart = "/api/FHIR/R4/Observation"
-    override val fhirResourceType = Bundle::class.java
-
-    fun getObservationBundle(tenant: Tenant, observationFhirId: String): Bundle = searchByID(tenant, observationFhirId)
 }

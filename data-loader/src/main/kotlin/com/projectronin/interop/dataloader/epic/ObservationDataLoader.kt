@@ -1,26 +1,22 @@
-package com.projectronin.interop.dataloader.epic.resource
+package com.projectronin.interop.dataloader.epic
 
-import com.projectronin.interop.dataloader.epic.ExperimentationOCIClient
-import com.projectronin.interop.dataloader.epic.resource.service.BaseEpicService
+import com.projectronin.interop.dataloader.epic.service.ObservationService
 import com.projectronin.interop.ehr.epic.client.EpicClient
-import com.projectronin.interop.ehr.util.toOrParams
-import com.projectronin.interop.ehr.util.toSearchTokens
 import com.projectronin.interop.fhir.r4.resource.Observation
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.tenant.config.model.Tenant
-import mu.KotlinLogging
 import java.nio.file.Paths
 import java.time.LocalDate
 import kotlin.io.path.createDirectory
 import kotlin.system.measureTimeMillis
 
 class ObservationDataLoader(
-    epicClient: EpicClient,
-    expOCIClient: ExperimentationOCIClient
-) : BaseLoader(expOCIClient) {
-    private val logger = KotlinLogging.logger { }
-    private val observationService = EpicDateLimitedObservationService(epicClient)
+    epicClient: EpicClient
+) : BaseEpicDataLoader() {
+    private val observationService = ObservationService(epicClient)
     private val resourceType = "observations"
+    override val jira = "Prior to paradigm change"
+    override fun main() = TODO("Prior to paradigm change")
 
     /**
      * Attempts to load observations through a patient search.  Writes them to a file named "observation_mrn.json" and
@@ -170,27 +166,5 @@ class ObservationDataLoader(
         logger.info { "Writing $fileName and uploading to OCI" }
         writeFile(fileName, observations)
         uploadFile(fileName, tenant, resourceType, timeStamp)
-    }
-}
-
-class EpicDateLimitedObservationService(epicClient: EpicClient) :
-    BaseEpicService<Observation>(epicClient) {
-    override val fhirURLSearchPart = "/api/FHIR/R4/Observation"
-    override val fhirResourceType = Observation::class.java
-
-    fun findObservationsByPatient(
-        tenant: Tenant,
-        patientFhirIds: List<String>,
-        observationCategoryCodes: List<String>,
-        startDate: LocalDate?
-    ): List<Observation> {
-        val observationResponses = patientFhirIds.chunked(1) {
-            val parameters = mapOf(
-                "patient" to it.joinToString(separator = ","),
-                "category" to observationCategoryCodes.toSearchTokens().toOrParams()
-            ) + if (startDate == null) emptyMap() else mapOf("date" to "ge$startDate")
-            getResourceListFromSearch(tenant, parameters)
-        }
-        return observationResponses.flatten()
     }
 }
