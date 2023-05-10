@@ -32,8 +32,25 @@ class MockEpicTenantService {
         }
     }
 
+    private val psjProdTenant = mockk<Tenant> {
+        every { mnemonic } returns "v7r1eczk"
+        every { name } returns "psj"
+        every { vendor } returns mockk<Epic> {
+            every { type } returns VendorType.EPIC
+            every { hsi } returns null
+            every { patientMRNSystem } returns mrnSystem
+            every { clientId } returns loadClientId
+            every { serviceEndpoint } returns loadServiceEndpoint
+            every { authenticationConfig } returns mockk {
+                every { authEndpoint } returns loadAuthEndpoint
+                every { privateKey } returns loadPrivateKey
+            }
+            every { ehrUserId } returns "1"
+        }
+    }
+
     private fun getTenants(): List<Tenant> {
-        return listOf(tenant)
+        return listOf(tenant, psjProdTenant)
     }
 
     fun getTenant(tenantMnemonic: String): Tenant {

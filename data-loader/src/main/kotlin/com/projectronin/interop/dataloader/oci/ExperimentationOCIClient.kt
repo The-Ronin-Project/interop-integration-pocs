@@ -2,6 +2,7 @@ package com.projectronin.interop.dataloader.oci
 
 import com.projectronin.interop.datalake.oci.client.OCIClient
 import com.projectronin.interop.tenant.config.model.Tenant
+import mu.KotlinLogging
 import java.io.FileInputStream
 
 class ExperimentationOCIClient(
@@ -22,6 +23,8 @@ class ExperimentationOCIClient(
     datalakeBucket = "",
     regionId = regionId
 ) {
+    private val logger = KotlinLogging.logger { }
+
     companion object {
         fun fromEnvironmentVariables(): ExperimentationOCIClient {
             // Values can be found in Vault mirth-connector when setting up your environment
@@ -56,6 +59,13 @@ class ExperimentationOCIClient(
         val fileNameToUpload =
             "${tenant.name.lowercase()}_data_exploration/${resourceType.lowercase()}/$timeStamp/$fileNameOut".replace(":", "-")
 
-        return upload(experimentationBucket, fileNameToUpload, FileInputStream(fileName))
+        // If you upload enough files in a run, OCI will eventually fail on a few.  Just log it and move on
+        // to the next file.
+        return runCatching {
+            upload(experimentationBucket, fileNameToUpload, FileInputStream(fileName))
+        }.getOrElse {
+            logger.error { "Error uploading $fileName to OCI: ${it.message}" }
+            false
+        }
     }
 }

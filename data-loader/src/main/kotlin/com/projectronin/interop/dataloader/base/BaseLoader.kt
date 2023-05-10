@@ -47,7 +47,7 @@ abstract class BaseLoader() {
     abstract fun main()
 
     // Often times we're getting MRNs, this is a way to
-    private fun getMRNs(): Set<String> =
+    protected fun getMRNs(): Set<String> =
         this.javaClass.getResource("/mrns.txt")!!.readText().split("\r\n", "\n").toSet()
 
     protected abstract fun getPatientsForMRNs(mrns: Set<String>): Map<String, Patient>
