@@ -20,6 +20,10 @@ _Cerner_\
 LOAD_ACCOUNT_ID\
 LOAD_SECRET
 
+The LOAD_PRIVATE_KEY value must be appear inside a pair of added double quote characters, as here:
+```
+export LOAD_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----MIIEvgIBADAEhyyBb/1sM4pghH/wSDbfxIUIG+/BFZ1Kr-----END PRIVATE KEY-----"
+```
 
 _These values can be found in the HashiCorp Vault, [here](https://vault.devops.projectronin.io:8200/ui/vault/secrets/interop-mirth-connector/show/prod),
 under the interop-mirth-connector/prod folder._\
@@ -29,6 +33,9 @@ LOAD_OCI_USER_OCID\
 LOAD_OCI_FINGERPRINT\
 LOAD_OCI_REGION_ID\
 LOAD_OCI_PRIVATE_KEY
+
+
+
 
 Once the above variables are setup, create a new dataloader via extending `BaseEpicDataLoader` or `BaseCernerDataLoader`.
 You'll need to write a `main()` function which will retrieve the data needed, and collate or format is needed before loading it to OCI.
