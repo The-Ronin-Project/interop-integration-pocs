@@ -34,9 +34,6 @@ LOAD_OCI_FINGERPRINT\
 LOAD_OCI_REGION_ID\
 LOAD_OCI_PRIVATE_KEY
 
-
-
-
 Once the above variables are setup, create a new dataloader via extending `BaseEpicDataLoader` or `BaseCernerDataLoader`.
 You'll need to write a `main()` function which will retrieve the data needed, and collate or format is needed before loading it to OCI.
 Services in the `service` folder should be be able to be re-used by future data loaders, so avoid putting too much logic there.
