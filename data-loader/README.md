@@ -20,6 +20,10 @@ _Cerner_\
 LOAD_ACCOUNT_ID\
 LOAD_SECRET
 
+The LOAD_PRIVATE_KEY value must be appear inside a pair of added double quote characters, as here:
+```
+export LOAD_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----MIIEvgIBADAEhyyBb/1sM4pghH/wSDbfxIUIG+/BFZ1Kr-----END PRIVATE KEY-----"
+```
 
 _These values can be found in the HashiCorp Vault, [here](https://vault.devops.projectronin.io:8200/ui/vault/secrets/interop-mirth-connector/show/prod),
 under the interop-mirth-connector/prod folder._\
@@ -36,7 +40,12 @@ Services in the `service` folder should be be able to be re-used by future data 
 
 If needed, in the resources folder, update _mrns.txt_ with a list of mrns you're interested in loading data for.  If you don't have any and you're interested in PSJ patients, you can pull some from [this](https://docs.google.com/spreadsheets/d/1o9Kl0uZ5rAxra_t1C598CPtVbi_GJdTd2sSnKsm35jI/edit#gid=490983879) Google sheet.
 
+While just playing around, you might comment out the `uploadFile()` calls in the `main()` function you are using
+and view the local output from `writeFile()` only. Doing this avoids loading data into OCI that no one will use. 
+For final runs, uncomment the `uploadFile()` calls. 
+
 Last but not least, click the run button next to ```fun main()``` in your data loader, then just sit back and watch the magic happen!
+
 # Verifying Data
 
 The following steps can be used to verify that the data was properly loaded into the OCI data lake.
