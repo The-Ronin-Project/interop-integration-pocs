@@ -38,7 +38,6 @@ Once the above variables are setup, create a new dataloader via extending `BaseE
 You'll need to write a `main()` function which will retrieve the data needed, and collate or format is needed before loading it to OCI.
 Services in the `service` folder should be be able to be re-used by future data loaders, so avoid putting too much logic there.
 
-
 If needed, in the resources folder, update _mrns.txt_ with a list of mrns you're interested in loading data for.  If you don't have any and you're interested in PSJ patients, you can pull some from [this](https://docs.google.com/spreadsheets/d/1o9Kl0uZ5rAxra_t1C598CPtVbi_GJdTd2sSnKsm35jI/edit#gid=490983879) Google sheet.
 
 While just playing around, you might comment out the `uploadFile()` calls in the `main()` function you are using
