@@ -16,7 +16,10 @@ class ObservationDataLoader(
     private val observationService = ObservationService(epicClient)
     private val resourceType = "observations"
     override val jira = "Prior to paradigm change"
-    override fun main() = TODO("Prior to paradigm change")
+    override val tenantMnemonic = "mdaoc"
+    override fun main() {
+        load(getPatientsForMRNs(getMRNs()), tenant, LocalDate.now().minusMonths(1))
+    }
 
     /**
      * Attempts to load observations through a patient search.  Writes them to a file named "observation_mrn.json" and
