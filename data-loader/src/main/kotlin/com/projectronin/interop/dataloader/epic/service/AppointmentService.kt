@@ -20,9 +20,14 @@ class AppointmentService(epicClient: EpicClient) : BaseEpicService<Appointment>(
     val dateFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy")
     val urlPart = "/api/epic/2013/Scheduling/Provider/GetProviderAppointments/Scheduling/Provider/Appointments"
 
-    fun getEpicAppointmentsFromDepartmentIdentifier(tenant: Tenant, departmentIdentifier: Identifier): List<EpicAppointment> {
-        val startDate = LocalDate.now()
-        val endDate = LocalDate.now()
+    fun getEpicAppointmentsFromDepartmentIdentifier(
+        tenant: Tenant,
+        departmentIdentifier: Identifier,
+        minusDays: Int = 1,
+        plusDays: Int = 1
+    ): List<EpicAppointment> {
+        val startDate = LocalDate.now().minusDays(minusDays.toLong())
+        val endDate = LocalDate.now().plusDays(plusDays.toLong())
         val request = GetProviderAppointmentRequest(
             userID = tenant.vendorAs<Epic>().ehrUserId,
             departments = listOf(IDType(id = departmentIdentifier.value!!.value!!, type = "External")),

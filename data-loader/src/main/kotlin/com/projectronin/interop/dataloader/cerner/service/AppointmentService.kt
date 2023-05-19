@@ -11,10 +11,10 @@ class AppointmentService(cernerClient: CernerClient) : BaseCernerService<Appoint
     override val fhirURLSearchPart = "/Appointment"
     override val fhirResourceType = Appointment::class.java
 
-    fun getAppointmentFromLocation(tenant: Tenant, locationFhirID: String): List<Appointment> {
+    fun getAppointmentFromLocation(tenant: Tenant, locationFhirID: String, minusDays: Int = 1, plusDays: Int = 1): List<Appointment> {
         val offset = ZoneOffset.UTC
-        val startDate = LocalDate.now().minusDays(1)
-        val endDate = startDate.plusDays(1)
+        val startDate = LocalDate.now().minusDays(minusDays.toLong())
+        val endDate = startDate.plusDays(plusDays.toLong())
         val parameters = mapOf(
             "location" to locationFhirID,
             "date" to RepeatingParameter(

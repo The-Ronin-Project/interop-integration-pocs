@@ -32,7 +32,8 @@ class CernerAuthenticationService(private val client: HttpClient) :
             "Patient",
             "Appointment",
             "Location",
-            "Observation"
+            "Observation",
+            "Condition"
         )
 
         val scopes = mutableListOf<String>()
@@ -43,7 +44,7 @@ class CernerAuthenticationService(private val client: HttpClient) :
         scopes.joinToString(separator = " ")
     }
 
-    override fun getAuthentication(tenant: Tenant): Authentication? {
+    override fun getAuthentication(tenant: Tenant): Authentication {
         val vendor = tenant.vendorAs<Cerner>()
         val authURL = vendor.authenticationConfig.authEndpoint
         val clientIdWithSecret = "${vendor.authenticationConfig.accountId}:${vendor.authenticationConfig.secret}"
