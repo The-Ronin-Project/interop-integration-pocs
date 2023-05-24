@@ -1,7 +1,7 @@
 package com.projectronin.interop.dataloader.epic
 
-import com.projectronin.interop.dataloader.epic.service.BaseEpicService
 import com.projectronin.interop.dataloader.epic.service.BinaryService
+import com.projectronin.interop.dataloader.epic.service.DiagnosticReportService
 import com.projectronin.interop.ehr.auth.EHRAuthenticationBroker
 import com.projectronin.interop.ehr.epic.client.EpicClient
 import com.projectronin.interop.fhir.r4.datatype.DynamicValueType
@@ -22,7 +22,7 @@ class DiagnosticReportDataLoader(
     authenticationBroker: EHRAuthenticationBroker,
     httpClient: HttpClient
 ) : BaseEpicDataLoader() {
-    private val diagnosticReportService = EpicDiagnosticReportService(epicClient)
+    private val diagnosticReportService = DiagnosticReportService(epicClient)
     private val binaryService = BinaryService(epicClient, authenticationBroker, httpClient)
     override val jira = "Prior to paradigm change"
     override fun main() = TODO("Prior to paradigm change")
@@ -96,15 +96,5 @@ class DiagnosticReportDataLoader(
             writer.write(""""$mrn","${diagnosticReport.id!!.value}","$date","${diagnosticReport.code?.text?.value}","${diagnosticReport.status?.value}","${attachment.title?.value}","${attachment.contentType?.value}",$escapedBinary""")
             writer.newLine()
         }
-    }
-}
-
-class EpicDiagnosticReportService(epicClient: EpicClient) : BaseEpicService<DiagnosticReport>(epicClient) {
-    override val fhirURLSearchPart = "/api/FHIR/R4/DiagnosticReport"
-    override val fhirResourceType = DiagnosticReport::class.java
-
-    fun getDiagnosticReportsByPatient(tenant: Tenant, patientFhirId: String): List<DiagnosticReport> {
-        val parameters = mapOf("patient" to patientFhirId)
-        return getResourceListFromSearch(tenant, parameters)
     }
 }
