@@ -7,11 +7,6 @@ while the current standard involves posting data to OCI Buckets that others can 
 
 ### To begin with, the following environment variables need to be set on your local system.
 
-_These values can be found by pulling the tenant config for the tenant and EHR that you're trying to connect to._\
-LOAD_MRN_SYSTEM\
-LOAD_SERVICE_ENDPOINT\
-LOAD_AUTH_ENDPOINT
-
 _Depending on if you're running for an Epic or Cerner client you'll also need_\
 _Epic_\
 LOAD_CLIENT_ID\
@@ -21,11 +16,13 @@ LOAD_ACCOUNT_ID\
 LOAD_SECRET
 
 The LOAD_PRIVATE_KEY value must be appear inside a pair of added double quote characters, as here:
+
 ```
 export LOAD_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----MIIEvgIBADAEhyyBb/1sM4pghH/wSDbfxIUIG+/BFZ1Kr-----END PRIVATE KEY-----"
 ```
 
-_These values can be found in the HashiCorp Vault, [here](https://vault.devops.projectronin.io:8200/ui/vault/secrets/interop-mirth-connector/show/prod),
+_These values can be found in the HashiCorp
+Vault, [here](https://vault.devops.projectronin.io:8200/ui/vault/secrets/interop-mirth-connector/show/prod),
 under the interop-mirth-connector/prod folder._\
 LOAD_OCI_NAMESPACE\
 LOAD_OCI_TENANCY_OCID\
@@ -34,17 +31,24 @@ LOAD_OCI_FINGERPRINT\
 LOAD_OCI_REGION_ID\
 LOAD_OCI_PRIVATE_KEY
 
-Once the above variables are setup, create a new dataloader via extending `BaseEpicDataLoader` or `BaseCernerDataLoader`.
-You'll need to write a `main()` function which will retrieve the data needed, and collate or format is needed before loading it to OCI.
-Services in the `service` folder should be be able to be re-used by future data loaders, so avoid putting too much logic there.
+Once the above variables are setup, create a new dataloader via extending `BaseEpicDataLoader`
+or `BaseCernerDataLoader`.
+You'll need to write a `main()` function which will retrieve the data needed, and collate or format is needed before
+loading it to OCI.
+Services in the `service` folder should be be able to be re-used by future data loaders, so avoid putting too much logic
+there.
 
-If needed, in the resources folder, update _mrns.txt_ with a list of mrns you're interested in loading data for.  If you don't have any and you're interested in PSJ patients, you can pull some from [this](https://docs.google.com/spreadsheets/d/1o9Kl0uZ5rAxra_t1C598CPtVbi_GJdTd2sSnKsm35jI/edit#gid=490983879) Google sheet.
+If needed, in the resources folder, update _mrns.txt_ with a list of mrns you're interested in loading data for. If you
+don't have any and you're interested in PSJ patients, you can pull some
+from [this](https://docs.google.com/spreadsheets/d/1o9Kl0uZ5rAxra_t1C598CPtVbi_GJdTd2sSnKsm35jI/edit#gid=490983879)
+Google sheet.
 
 While just playing around, you might comment out the `uploadFile()` calls in the `main()` function you are using
-and view the local output from `writeFile()` only. Doing this avoids loading data into OCI that no one will use. 
-For final runs, uncomment the `uploadFile()` calls. 
+and view the local output from `writeFile()` only. Doing this avoids loading data into OCI that no one will use.
+For final runs, uncomment the `uploadFile()` calls.
 
-Last but not least, click the run button next to ```fun main()``` in your data loader, then just sit back and watch the magic happen!
+Last but not least, click the run button next to ```fun main()``` in your data loader, then just sit back and watch the
+magic happen!
 
 # Verifying Data
 

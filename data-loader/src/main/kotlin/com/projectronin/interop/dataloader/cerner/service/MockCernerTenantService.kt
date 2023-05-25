@@ -7,25 +7,22 @@ import io.mockk.every
 import io.mockk.mockk
 
 class MockCernerTenantService {
-    // Values can be found in the customer you want to pull froms tenant config when setting up your environment
-    val mrnSystem: String = System.getenv("LOAD_MRN_SYSTEM")
+    // Values can be found in the prod proxy server
     val loadAccountId: String = System.getenv("LOAD_ACCOUNT_ID")
-    val loadServiceEndpoint: String = System.getenv("LOAD_SERVICE_ENDPOINT")
-    val loadAuthEndpoint: String = System.getenv("LOAD_AUTH_ENDPOINT")
     val loadSecret: String = System.getenv("LOAD_SECRET")
 
     private val tenant = mockk<Tenant> {
-        every { mnemonic } returns "cerncode"
+        every { mnemonic } returns "ejh3j95h"
         every { name } returns "cerncode"
         every { vendor } returns mockk<Cerner> {
             every { type } returns VendorType.CERNER
-            every { serviceEndpoint } returns loadServiceEndpoint
+            every { serviceEndpoint } returns "https://fhir-ehr-code.cerner.com/r4/ec2458f2-1e24-41c8-b71b-0e701af7583d"
             every { authenticationConfig } returns mockk {
-                every { authEndpoint } returns loadAuthEndpoint
+                every { authEndpoint } returns "https://authorization.cerner.com/tenants/ec2458f2-1e24-41c8-b71b-0e701af7583d/protocols/oauth2/profiles/smart-v1/token"
                 every { accountId } returns loadAccountId
                 every { secret } returns loadSecret
             }
-            every { patientMRNSystem } returns mrnSystem
+            every { patientMRNSystem } returns "urn:oid:2.16.840.1.113883.6.1000"
         }
     }
 
