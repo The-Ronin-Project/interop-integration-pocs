@@ -63,8 +63,25 @@ class MockEpicTenantService {
         }
     }
 
+    private val mdaTstTenant = mockk<Tenant> {
+        every { mnemonic } returns "mdaoc-stage"
+        every { name } returns "mda"
+        every { vendor } returns mockk<Epic> {
+            every { type } returns VendorType.EPIC
+            every { hsi } returns null
+            every { patientMRNSystem } returns "urn:oid:1.2.840.114350.1.13.412.3.7.5.737384.14"
+            every { clientId } returns loadClientId
+            every { serviceEndpoint } returns "https://fhirtst.mdanderson.org/fhirtst/"
+            every { authenticationConfig } returns mockk {
+                every { authEndpoint } returns "https://fhirtst.mdanderson.org/fhirtst/oauth2/token"
+                every { privateKey } returns loadPrivateKey
+            }
+            every { ehrUserId } returns "1"
+        }
+    }
+
     private fun getTenants(): List<Tenant> {
-        return listOf(apposndTenant, psjProdTenant, mdaProdTenant)
+        return listOf(apposndTenant, psjProdTenant, mdaProdTenant, mdaTstTenant)
     }
 
     fun getTenant(tenantMnemonic: String): Tenant {
