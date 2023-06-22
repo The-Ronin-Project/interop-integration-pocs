@@ -39,9 +39,7 @@ class MDAMedicationDataLoader : BaseEpicDataLoader() {
                 // discover medication references from patients
                 val requests = medicationRequestService.getMedicationRequestByPatient(
                     tenant,
-                    fhirId,
-                    startDate,
-                    endDate
+                    fhirId
                 )
                 logger.info { "Found ${requests.size} requests" }
                 val statements = medicationStatementService.getMedicationStatementsByPatientFHIRId(

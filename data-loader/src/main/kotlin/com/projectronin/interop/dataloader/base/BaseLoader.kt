@@ -1,11 +1,14 @@
 package com.projectronin.interop.dataloader.base
 
+import com.projectronin.ehr.dataauthority.client.EHRDataAuthorityClient
 import com.projectronin.interop.common.http.spring.HttpSpringConfig
 import com.projectronin.interop.common.jackson.JacksonManager
+import com.projectronin.interop.datalake.DatalakePublishService
 import com.projectronin.interop.dataloader.oci.ExperimentationOCIClient
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.fhir.r4.resource.Resource
 import com.projectronin.interop.tenant.config.model.Tenant
+import io.mockk.mockk
 import mu.KotlinLogging
 import java.io.BufferedWriter
 import java.io.File
@@ -17,6 +20,9 @@ import kotlin.io.path.createDirectory
  * Base class used to avoid rewriting the same functions in every loader.
  */
 abstract class BaseLoader() {
+    protected val ehrDataAuthorityClient = mockk<EHRDataAuthorityClient>(relaxed = true)
+    protected val datalakePublishService = mockk<DatalakePublishService>(relaxed = true)
+
     val expOCIClient = ExperimentationOCIClient.fromEnvironmentVariables()
     val logger = KotlinLogging.logger { }
     val httpClient = HttpSpringConfig().getHttpClient()
@@ -62,7 +68,7 @@ abstract class BaseLoader() {
         val pathName = "$fileDirectory/$fileName.json"
         runCatching { Paths.get(fileDirectory).createDirectory() }
 
-        logger.info { "Writing $pathName" }
+        // logger.info { "Writing $pathName" }
         BufferedWriter(FileWriter(File(pathName))).use { writer ->
             writer.write(
                 JacksonManager.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(resources)
@@ -70,11 +76,14 @@ abstract class BaseLoader() {
             writer.close()
         }
         if (!dryRun) {
-            logger.info { "Uploading $pathName to OCI" }
+            // logger.info { "Uploading $pathName to OCI" }
             expOCIClient.uploadExport(tenant, resourceType, pathName, timeStamp)
         } else {
             logger.info { "Not uploading $pathName to OCI, mark dryRun = false to upload" }
         }
+    }
+
+    fun uploadString(tenant: Tenant, fileName: String, data: String, timeStamp: String) {
     }
 
     abstract fun main()

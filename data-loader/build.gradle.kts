@@ -1,5 +1,6 @@
 dependencies {
-    implementation(libs.interop.aidbox)
+    implementation(libs.ehrda.client)
+    implementation(libs.ehrda.models)
     implementation(libs.interop.common.http)
     implementation(libs.interop.common.jackson)
     implementation(libs.interop.datalake)

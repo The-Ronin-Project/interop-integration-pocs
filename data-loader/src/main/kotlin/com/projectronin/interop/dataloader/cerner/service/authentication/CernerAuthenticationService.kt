@@ -44,7 +44,7 @@ class CernerAuthenticationService(private val client: HttpClient) :
         scopes.joinToString(separator = " ")
     }
 
-    override fun getAuthentication(tenant: Tenant): Authentication {
+    override fun getAuthentication(tenant: Tenant, disableRetry: Boolean): Authentication {
         val vendor = tenant.vendorAs<Cerner>()
         val authURL = vendor.authenticationConfig.authEndpoint
         val clientIdWithSecret = "${vendor.authenticationConfig.accountId}:${vendor.authenticationConfig.secret}"

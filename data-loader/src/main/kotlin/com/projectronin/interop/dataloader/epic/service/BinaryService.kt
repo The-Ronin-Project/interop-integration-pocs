@@ -27,7 +27,13 @@ class BinaryService(
     private val logger = KotlinLogging.logger { }
 
     fun getBinaryData(tenant: Tenant, binaryFhirId: String): String {
-        return runBlocking { epicClient.get(tenant, "/api/FHIR/R4/Binary/$binaryFhirId", emptyMap()).bodyAsText() }
+        return runBlocking {
+            epicClient.get(
+                tenant,
+                "/api/FHIR/R4/Binary/$binaryFhirId",
+                emptyMap()
+            ).httpResponse.bodyAsText()
+        }
     }
 
     fun getBinary(tenant: Tenant, binaryFhirId: String): Binary? {

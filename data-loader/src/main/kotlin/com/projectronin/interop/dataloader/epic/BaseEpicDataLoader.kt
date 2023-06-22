@@ -11,13 +11,11 @@ import com.projectronin.interop.fhir.r4.datatype.primitive.Uri
 import com.projectronin.interop.fhir.r4.datatype.primitive.asFHIR
 import com.projectronin.interop.fhir.r4.resource.Patient
 import com.projectronin.interop.tenant.config.model.vendor.Epic
-import io.mockk.mockk
-import com.projectronin.interop.aidbox.PatientService as AidboxPatientService
 
 abstract class BaseEpicDataLoader : BaseLoader() {
     private val epicAuthenticationService = EpicAuthenticationService(httpClient)
-    private val ehrAuthenticationBroker = EHRAuthenticationBroker(listOf(epicAuthenticationService))
-    protected val epicClient = EpicClient(httpClient, ehrAuthenticationBroker)
+    protected val ehrAuthenticationBroker = EHRAuthenticationBroker(listOf(epicAuthenticationService))
+    protected val epicClient = EpicClient(httpClient, ehrAuthenticationBroker, datalakePublishService)
     abstract val jira: String
     open val tenantMnemonic: String = ""
     private val tenantService = MockEpicTenantService()
@@ -25,12 +23,16 @@ abstract class BaseEpicDataLoader : BaseLoader() {
         tenantService.getTenant(tenantMnemonic)
     }
 
-    private val aidboxPatientService = mockk<AidboxPatientService>(relaxed = true)
-    private val patientService = EpicPatientService(epicClient, 5, aidboxPatientService)
+    private val patientService = EpicPatientService(epicClient, 5, ehrDataAuthorityClient)
 
     override fun getPatientsForMRNs(mrns: Set<String>): Map<String, Patient> {
         val keys = mrns.filter { it.isNotBlank() }
-            .associateWith { mrn -> Identifier(system = Uri(tenant.vendorAs<Epic>().patientMRNSystem), value = mrn.asFHIR()) }
+            .associateWith { mrn ->
+                Identifier(
+                    system = Uri(tenant.vendorAs<Epic>().patientMRNSystem),
+                    value = mrn.asFHIR()
+                )
+            }
         if (keys.isEmpty()) return emptyMap()
 
         logger.info { "Loading patients for ${keys.size} MRNs" }
