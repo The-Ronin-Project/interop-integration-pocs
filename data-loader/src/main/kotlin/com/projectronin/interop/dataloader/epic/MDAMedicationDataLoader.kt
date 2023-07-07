@@ -27,7 +27,7 @@ class MDAMedicationDataLoader : BaseEpicDataLoader() {
         val today = LocalDate.now()
         val startDate = today.minusDays(30)
         val endDate = today
-        logger.info { "Loading Encounters" }
+        logger.info { "Loading Medications" }
         val totalMedications = mutableListOf<Medication>()
         val totalMedicationIds = mutableListOf<String>()
         patientsByMrn.forEach { entry ->

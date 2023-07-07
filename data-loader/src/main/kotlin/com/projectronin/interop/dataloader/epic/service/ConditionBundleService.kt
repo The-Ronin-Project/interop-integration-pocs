@@ -22,4 +22,18 @@ class ConditionBundleService(epicClient: EpicClient) :
 
         return getBundleWithPaging(tenant, parameters)
     }
+
+    fun findConditionsWithStaging(
+        tenant: Tenant,
+        patientFhirId: String
+    ): Bundle {
+        val parameters = mapOf(
+            "patient" to patientFhirId,
+            "category" to "problem-list-item",
+            "clinical-status" to "active",
+            "_include" to "Condition:assessment"
+        )
+
+        return getBundleWithPaging(tenant, parameters)
+    }
 }

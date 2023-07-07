@@ -38,14 +38,20 @@ loading it to OCI.
 Services in the `service` folder should be be able to be re-used by future data loaders, so avoid putting too much logic
 there.
 
-If needed, in the resources folder, update _mrns.txt_ with a list of mrns you're interested in loading data for. If you
-don't have any and you're interested in PSJ patients, you can pull some
+If needed, in the resources folder, provide a _mrns.txt_ file with the patient MRN values you're interested in loading data for.
+_mrns.txt_ should contain one MRN per line in the file and no punctuation. If you
+don't have any MRNs and you're interested in PSJ patients, you can pull MRNs 
 from [this](https://docs.google.com/spreadsheets/d/1o9Kl0uZ5rAxra_t1C598CPtVbi_GJdTd2sSnKsm35jI/edit#gid=490983879)
-Google sheet.
+Google sheet. 
 
-While just playing around, you might comment out the `uploadFile()` calls in the `main()` function you are using
-and view the local output from `writeFile()` only. Doing this avoids loading data into OCI that no one will use.
-For final runs, uncomment the `uploadFile()` calls.
+While just playing around with your new data loader, at any `writeAndUploadResources()` calls set `dryRun = true`  
+and view the local output. Doing this avoids loading data into OCI that no one will use.
+
+Another good practice while playing around is using a _mrns.txt_ file that you cut to only 5-6 lines.
+A full _mrns.txt_ file from one of our tenant spreadsheets can supply tens of thousands of MRNs. 
+When you first sending request to a real tenant, try with 100 MRNs to see how long it takes per patient.
+
+For final runs, in any `writeAndUploadResources()` calls set `dryRun = false` and rename your full MRNs file to _mrns.txt_.
 
 Last but not least, click the run button next to ```fun main()``` in your data loader, then just sit back and watch the
 magic happen!
