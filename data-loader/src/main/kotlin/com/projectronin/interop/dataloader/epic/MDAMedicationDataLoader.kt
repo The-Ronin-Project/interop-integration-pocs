@@ -1,12 +1,17 @@
 package com.projectronin.interop.dataloader.epic
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.databind.annotation.JsonNaming
+import com.projectronin.interop.ehr.epic.EpicEncounterService
 import com.projectronin.interop.ehr.epic.EpicMedicationRequestService
 import com.projectronin.interop.ehr.epic.EpicMedicationService
-import com.projectronin.interop.ehr.epic.EpicMedicationStatementService
+import com.projectronin.interop.fhir.r4.datatype.DynamicValue
 import com.projectronin.interop.fhir.r4.datatype.DynamicValueType
-import com.projectronin.interop.fhir.r4.datatype.Reference
-import com.projectronin.interop.fhir.r4.resource.Medication
-import java.time.LocalDate
+import com.projectronin.interop.fhir.r4.datatype.Extension
+import com.projectronin.interop.fhir.r4.datatype.primitive.Uri
+import com.projectronin.interop.fhir.r4.resource.MedicationRequest
+import kotlinx.coroutines.runBlocking
 import kotlin.system.exitProcess
 
 fun main() {
@@ -19,17 +24,12 @@ class MDAMedicationDataLoader : BaseEpicDataLoader() {
     override val jira = "INT-1791"
     override val tenantMnemonic = "mdaoc"
     private val medicationRequestService = EpicMedicationRequestService(epicClient)
-    private val medicationStatementService = EpicMedicationStatementService(epicClient)
+    private val encounterService = EpicEncounterService(epicClient)
     private val medicationService = EpicMedicationService(epicClient, batchSize = 5)
     override fun main() {
-        val patientsByMrn = getPatientsForMRNs()
+        val patientsByMrn = getPatientsForMRNs(getMRNs())
         val timeStamp = System.currentTimeMillis().toString()
-        val today = LocalDate.now()
-        val startDate = today.minusDays(30)
-        val endDate = today
         logger.info { "Loading Encounters" }
-        val totalMedications = mutableListOf<Medication>()
-        val totalMedicationIds = mutableListOf<String>()
         patientsByMrn.forEach { entry ->
             val patient = entry.value
             val mrn = entry.key
@@ -42,41 +42,61 @@ class MDAMedicationDataLoader : BaseEpicDataLoader() {
                     fhirId
                 )
                 logger.info { "Found ${requests.size} requests" }
-                val statements = medicationStatementService.getMedicationStatementsByPatientFHIRId(
-                    tenant,
-                    fhirId
-                )
-                logger.info { "Found ${statements.size} statements" }
-                val medicationIdFromStatements = statements.mapNotNull {
-                    val medication = it.medication!!
-                    if (medication.type == DynamicValueType.REFERENCE) {
-                        (medication.value as Reference).decomposedId()
-                    } else {
-                        logger.info { "MedicationStatement had medication of type ${medication.type}" }
-                        null
+                val patientID =
+                    entry.value.identifier.find { identifier -> identifier.type?.text?.value?.lowercase() == "external" }?.value?.value
+                        ?: return@forEach
+                val requestsWithAdminDate = mutableListOf<MedicationRequest>()
+                requests.map {
+                    // logger.info { "MedRequestID:  ${it.id}" }
+                    val encounter = kotlin.runCatching {
+                        it.encounter?.decomposedId()?.let { encId -> encounterService.getByID(tenant, encId) }
+                            ?: return@map
+                    }.getOrNull() ?: return@map
+                    val contactID =
+                        encounter.identifier.find { identifier -> identifier.system?.value == "urn:oid:1.2.840.114350.1.13.412.2.7.3.698084.8" }?.value?.value
+                            ?: return@map
+                    val orderID =
+                        it.identifier.find { identifier -> identifier.system?.value == "urn:oid:1.2.840.114350.1.13.412.2.7.2.798268" }?.value?.value
+                            ?: return@map
+                    val request = EpicMedAdminRequest(
+                        patientID,
+                        "External",
+                        contactID,
+                        "CSN",
+                        listOf(OrderID(orderID, "External"))
+                    )
+                    // logger.info { "MedAdminRequest: $request" }
+                    val response = runBlocking {
+                        val post = epicClient.post(
+                            tenant,
+                            "/api/epic/2014/Clinical/Patient/GETMEDICATIONADMINISTRATIONHISTORY/MedicationAdministration",
+                            request
+                        )
+                        // logger.info { post.httpResponse }
+                        post.body<EpicMedAdmin>()
+                    }
+                    // logger.info { response }
+                    val admins =
+                        response.orders.firstOrNull()?.medicationAdministrations?.filter { admin -> admin.action == "Given" }
+                    if (admins != null && admins.isNotEmpty()) {
+                        logger.info { "MedAdminRequest: $request" }
+                        logger.info { "Admin: $admins" }
+
+                        requestsWithAdminDate.add(
+                            it.copy(
+                                extension = it.extension + admins.map { admin ->
+                                    Extension(
+                                        url = Uri("http://projectronin.io/fhir/StructureDefinition/Extension/medicationRequestAdministrationDate"),
+                                        value = DynamicValue(DynamicValueType.DATE_TIME, admin.administrationInstant)
+                                    )
+                                }
+                            )
+                        )
                     }
                 }
-                val medicationIdFromRequests = requests.mapNotNull {
-                    val medication = it.medication!!
-                    if (medication.type == DynamicValueType.REFERENCE) {
-                        (medication.value as Reference).decomposedId()
-                    } else {
-                        logger.info { "MedicationRequest had medication of type ${medication.type}" }
-                        null
-                    }
+                requestsWithAdminDate.forEach { requestWithAdminDate ->
+                    writeAndUploadResources(tenant, requestWithAdminDate.id!!.value!!, listOf(requestWithAdminDate), timeStamp, dryRun = false)
                 }
-                val allMedicationIds = (medicationIdFromStatements + medicationIdFromRequests).distinct()
-                logger.info { "Found ${allMedicationIds.size} Medication IDs" }
-                val newMedicationsIds = allMedicationIds - totalMedicationIds
-                logger.info { "Of which ${newMedicationsIds.size} are new" }
-                logger.info { "Searching for Medications" }
-                val medications = medicationService.getMedicationsByFhirId(
-                    tenant = tenant,
-                    newMedicationsIds
-                )
-                totalMedicationIds.addAll(newMedicationsIds)
-                logger.info { "Found ${medications.size} Medications" }
-                totalMedications.addAll(medications)
             }
 
             if (run.isFailure) {
@@ -84,53 +104,42 @@ class MDAMedicationDataLoader : BaseEpicDataLoader() {
                 logger.error(exception) { "Error processing $mrn: ${exception?.message}" }
             }
         }
-        logger.info { "Starting to resolve references" }
-        logger.info { "There are currently ${totalMedicationIds.size} medication ids" }
-        // resolve all the new medications we've gotten
-        var count = 0
-        do {
-            count += 1
-            logger.info { "Starting to resolve references on loop $count" }
-            val newIngredientIds = getNewReferences(totalMedications, totalMedicationIds)
-            logger.info { "Found ${newIngredientIds.size} new ingredients" }
-            val newMedications = medicationService.getMedicationsByFhirId(
-                tenant = tenant,
-                newIngredientIds
-            )
-            totalMedicationIds.addAll(newIngredientIds)
-            totalMedications.addAll(newMedications)
-            logger.info { "There are currently ${totalMedicationIds.size} medications" }
-        } while (newIngredientIds.isNotEmpty() && count < 4) // since this is a while loop, this is just a safety valve
-
-        logger.info { "Found ${totalMedications.size} medications" }
-
-        totalMedications.forEach {
-            writeAndUploadResources<Medication>(tenant, it.id?.value!!, listOf(it), timeStamp, dryRun = false)
-        }
-        logger.info { "Done loading Medications" }
-    }
-
-    private fun getNewReferences(medications: List<Medication>, foundIds: List<String>): List<String> {
-        val allIngredients = medications.map {
-            val ingredients = it.ingredient
-            ingredients.mapNotNull {
-                if (it.item?.type == DynamicValueType.REFERENCE) {
-                    val reference = it.item?.value as Reference
-                    if (reference.decomposedType() == "Medication") {
-                        reference.decomposedId()!!
-                    } else {
-                        null
-                    }
-                } else {
-                    null
-                }
-            }
-        }.flatten()
-        logger.info { "There are ${allIngredients.size} ingredient references" }
-        val newIngredients = allIngredients.filter {
-            !foundIds.contains(it)
-        }
-        logger.info { "Of which ${newIngredients.size} are new" }
-        return newIngredients
     }
 }
+
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
+data class EpicMedAdmin(
+    val orders: List<MedicationOrder> = emptyList()
+)
+
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
+data class MedicationOrder(
+    val medicationAdministrations: List<MedicationAdministration> = emptyList()
+)
+
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
+data class MedicationAdministration(
+    val administrationInstant: String,
+    val action: String
+)
+
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
+data class EpicMedAdminRequest(
+    @JsonProperty("PatientID")
+    val patientID: String,
+    @JsonProperty("PatientIDType")
+    val patientIDType: String,
+    @JsonProperty("ContactID")
+    val contactID: String,
+    @JsonProperty("ContactIDType")
+    val contactIDType: String,
+    @JsonProperty("OrderIDs")
+    val orderIDs: List<OrderID>
+)
+
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
+data class OrderID(
+    @JsonProperty("ID")
+    val ID: String,
+    val type: String
+)
