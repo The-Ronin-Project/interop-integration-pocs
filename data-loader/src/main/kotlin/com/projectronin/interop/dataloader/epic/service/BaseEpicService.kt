@@ -6,7 +6,6 @@ import com.projectronin.interop.fhir.r4.resource.Bundle
 import com.projectronin.interop.fhir.r4.resource.Resource
 import com.projectronin.interop.fhir.stu3.resource.STU3Bundle
 import com.projectronin.interop.tenant.config.model.Tenant
-import io.ktor.client.call.body
 import io.ktor.util.reflect.TypeInfo
 import kotlinx.coroutines.runBlocking
 
@@ -16,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 abstract class BaseEpicService<T : Resource<T>>(val epicClient: EpicClient) {
     abstract val fhirResourceType: Class<T>
     abstract val fhirURLSearchPart: String
+    private val batchSize = 10
     private val standardParameters: Map<String, Any> = mapOf("_count" to 50)
 
     fun getResourceListFromSearch(tenant: Tenant, parameters: Map<String, Any?>): List<T> {
@@ -108,6 +108,17 @@ abstract class BaseEpicService<T : Resource<T>>(val epicClient: EpicClient) {
         return runBlocking {
             epicClient.get(tenant, "$fhirURLSearchPart/$resourceFHIRId")
                 .body(TypeInfo(fhirResourceType.kotlin, fhirResourceType))
+        }
+    }
+
+    fun getByIDs(tenant: Tenant, resourceFHIRIds: List<String>): Map<String, T> {
+        return runBlocking {
+            val chunkedIds = resourceFHIRIds.toSet().chunked(batchSize)
+            val resource = chunkedIds.map { idSubset ->
+                val parameters = mapOf("_id" to idSubset)
+                getResourceListFromSearch(tenant, parameters)
+            }.flatten()
+            resource.associateBy { it.id!!.value!! }
         }
     }
 }

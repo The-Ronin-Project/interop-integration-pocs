@@ -18,10 +18,13 @@ fun main() {
 }
 
 class CarePlanDataLoader : BaseEpicDataLoader() {
-    override val jira = "INT-1703"
-    override val tenantMnemonic = "v7r1eczk"
+    override val jira = "INT-2049" // originally INT-1703
+    override val tenantMnemonic = "mdaoc"
     private val carePlanService = CarePlanService(epicClient)
     private val requestGroupService = RequestGroupService(epicClient)
+
+    private val dryRun = false
+    private val loadRequestGroups = false
 
     override fun main() {
         val timeStamp = System.currentTimeMillis().toString()
@@ -33,16 +36,14 @@ class CarePlanDataLoader : BaseEpicDataLoader() {
             logger.info { "Loading care plans for patient $mrn (${index + 1} of ${patientsByMrn.size})" }
             val carePlans = loadCarePlans(patient)
             if (carePlans.isNotEmpty()) {
-                val carePlanFileName = "loaded/${mrn}_careplans.json"
-                writeFile(carePlanFileName, carePlans)
-                uploadFile(carePlanFileName, tenant, "careplans", timeStamp)
+                writeAndUploadResources(tenant, mrn, carePlans, timeStamp, dryRun)
 
-                logger.info { "Loading request groups for patient $mrn" }
-                val requestGroups = loadRequestGroups(carePlans)
-                if (requestGroups.isNotEmpty()) {
-                    val requestGroupFileName = "loaded/${mrn}_requestgroups.json"
-                    writeFile(requestGroupFileName, requestGroups)
-                    uploadFile(requestGroupFileName, tenant, "requestgroups", timeStamp)
+                if (loadRequestGroups) {
+                    logger.info { "Loading request groups for patient $mrn" }
+                    val requestGroups = loadRequestGroups(carePlans)
+                    if (requestGroups.isNotEmpty()) {
+                        writeAndUploadResources(tenant, mrn, requestGroups, timeStamp, dryRun)
+                    }
                 }
             }
         }
@@ -51,22 +52,48 @@ class CarePlanDataLoader : BaseEpicDataLoader() {
     private fun loadCarePlans(
         patient: Patient
     ): List<CarePlan> {
-        val carePlans = carePlanService.getCarePlansByPatient(tenant, patient.id!!.value!!, CarePlanCategory.ONCOLOGY.code)
+        val carePlans =
+            carePlanService.getCarePlansByPatient(tenant, patient.id!!.value!!, CarePlanCategory.ONCOLOGY.code)
 
-        val cycleCarePlans = carePlans.map { carePlan ->
+        logger.info { "Loaded ${carePlans.size} CarePlans" }
+        val carePlanIds = carePlans.map { it.id!!.value!! }.toSet()
+        val cycleCarePlanIds = getCycleCarePlanIds(carePlans)
+        logger.info { "Found ${cycleCarePlanIds.size} cycle CarePlans to load" }
+
+        return carePlans + loadCarePlans(cycleCarePlanIds, carePlanIds)
+    }
+
+    private fun getCycleCarePlanIds(carePlans: Collection<CarePlan>): Set<String> {
+        return carePlans.map { carePlan ->
             carePlan.activity.map { activity ->
                 val carePlanReferences = activity.extension.getReferences("CarePlan")
 
                 carePlanReferences.mapNotNull { reference ->
                     val cycleCarePlanId = reference.decomposedId()
-                    cycleCarePlanId?.let {
-                        carePlanService.getByID(tenant, it)
-                    }
+                    cycleCarePlanId
                 }
             }.flatten()
-        }.flatten()
+        }.flatten().toSet()
+    }
 
-        return carePlans + cycleCarePlans
+    private fun loadCarePlans(requestLoad: Set<String>, previouslyLoadedIds: Set<String>): List<CarePlan> {
+        val toLoad = requestLoad - previouslyLoadedIds
+        if (toLoad.isEmpty()) {
+            return emptyList()
+        }
+
+        logger.info { "Loading ${toLoad.size} new CarePlans" }
+        val loaded = carePlanService.getByIDs(tenant, toLoad.toList()).values
+        logger.info { "Loaded ${loaded.size} CarePlans" }
+        if (loaded.isEmpty()) {
+            return emptyList()
+        }
+
+        val loadedIds = loaded.map { it.id!!.value!! }
+        val cycleIds = getCycleCarePlanIds(loaded)
+        logger.info { "Found ${cycleIds.size} cycle CarePlans to load" }
+
+        return loaded + loadCarePlans(cycleIds, previouslyLoadedIds + loadedIds)
     }
 
     private fun loadRequestGroups(carePlans: List<CarePlan>): List<RequestGroup> {

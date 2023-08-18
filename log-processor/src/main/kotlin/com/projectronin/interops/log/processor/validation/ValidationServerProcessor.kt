@@ -3,7 +3,7 @@ package com.projectronin.interops.log.processor.validation
 import com.projectronin.interop.common.http.spring.HttpSpringConfig
 import com.projectronin.interop.validation.client.IssueClient
 import com.projectronin.interop.validation.client.ResourceClient
-import com.projectronin.interop.validation.client.auth.auth0.ValidationAuth0Service
+import com.projectronin.interop.validation.client.auth.ValidationAuthenticationService
 import com.projectronin.interop.validation.client.generated.models.Order
 import com.projectronin.interop.validation.client.generated.models.ResourceStatus
 import com.projectronin.interop.validation.client.generated.models.Severity
@@ -25,7 +25,7 @@ class ValidationServerProcessor {
     private val secret = System.getenv("VALIDATION_AUTH_SECRET")
 
     private val httpClient = HttpSpringConfig().getHttpClient()
-    private val authService = ValidationAuth0Service(httpClient, authUrl, audience, clientId, secret)
+    private val authService = ValidationAuthenticationService(httpClient, authUrl, audience, clientId, secret, true)
     private val resourceClient = ResourceClient(hostUrl, httpClient, authService)
     private val issueClient = IssueClient(hostUrl, httpClient, authService)
 
