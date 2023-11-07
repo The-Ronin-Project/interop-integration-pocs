@@ -12,6 +12,7 @@ rootProject.name = "integration-pocs"
 include("kotlin-mirth-demo")
 include("log-processor")
 include("data-loader")
+include("autonomous-json-db")
 
 pluginManagement {
     plugins {
