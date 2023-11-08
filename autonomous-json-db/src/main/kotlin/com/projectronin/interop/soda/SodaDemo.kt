@@ -7,6 +7,7 @@ import oracle.soda.OracleDatabase
 import oracle.soda.OracleDocument
 import oracle.soda.OracleOperationBuilder
 import oracle.soda.rdbms.OracleRDBMSClient
+import java.sql.Connection
 import java.sql.DriverManager
 import java.util.Properties
 
@@ -36,9 +37,13 @@ fun main() {
     allFound.forEach {
         println("${it.key} - ${it.contentAsString}")
     }
+
+    val sqlResult = demo.sqlFindById(newPatient.id!!.value!!, "patient")
+    println("SQL Lookup found $sqlResult")
 }
 
 class SodaDemo {
+    private val connection: Connection
     private val database: OracleDatabase
 
     init {
@@ -49,8 +54,8 @@ class SodaDemo {
         props.setProperty("user", "admin")
         props.setProperty("password", "Longpassword1")
 
+        connection = DriverManager.getConnection(url, props)
         database = run {
-            val connection = DriverManager.getConnection(url, props)
             val client = OracleRDBMSClient()
             client.getDatabase(connection)
         }
@@ -70,6 +75,20 @@ class SodaDemo {
 
     fun query(query: String, collection: OracleCollection): List<OracleDocument> {
         return collection.find().filter(query).all()
+    }
+
+    fun sqlFindById(id: String, collection: String): String? {
+        return connection.prepareStatement("SELECT json_serialize(c.json_document) FROM $collection c WHERE c.json_document.id = :1")
+            .use { preparedStatement ->
+                preparedStatement.setString(1, id)
+                preparedStatement.executeQuery().use { resultSet ->
+                    if (resultSet.next()) {
+                        resultSet.getString(1)
+                    } else {
+                        null
+                    }
+                }
+            }
     }
 }
 
