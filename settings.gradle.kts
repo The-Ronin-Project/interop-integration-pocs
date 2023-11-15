@@ -13,6 +13,7 @@ include("kotlin-mirth-demo")
 include("log-processor")
 include("data-loader")
 include("autonomous-json-db")
+include("completeness-poc")
 
 pluginManagement {
     plugins {
