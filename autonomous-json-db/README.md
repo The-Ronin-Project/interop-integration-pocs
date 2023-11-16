@@ -32,7 +32,7 @@ MY_ATP admin Welcome_MY_ATP_1234 Longpassword1`
 
 In order for this demo to run, we need to have our Wallet setup. Create /tmp/scratch on your local machine, and then run
 the following
-`docker cp [CONTAINER_ID]:/u01/app/oracle/wallets/tls_wallet /tmp/scratch/tls_wallet`
+`docker cp [CONTAINER_ID]:/u01/app/oracle/wallets/tls_wallet /tmp/scratch`
 
 ## Demo
 
