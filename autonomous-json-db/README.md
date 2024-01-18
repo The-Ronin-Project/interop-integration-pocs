@@ -53,5 +53,5 @@ sudo keytool -import -alias adb_container_certificate -keystore $JAVA_HOME/lib/s
 You can see the code demo [here](src/main/kotlin/com/projectronin/interop/soda/SodaDemo.kt).
 
 The Docker image also starts up an instance
-of [Oracle's Database Actions](https://localhost:8443/ords/my_atp/admin/_sdw/) that you can use to access the JSON and
+of [Oracle's Database Actions](https://localhost:8443/ords/admin/_sdw/) that you can use to access the JSON and
 SQL views through your browser much like you would in OCI. Use the admin username and the password you set earlier.
