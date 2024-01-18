@@ -6,5 +6,6 @@ dependencies {
     implementation(libs.interop.fhir)
     implementation(libs.interop.fhirGenerators)
 
+    implementation(libs.bundles.ojdbc)
     implementation(libs.bundles.oracle.security)
 }

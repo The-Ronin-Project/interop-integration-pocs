@@ -47,8 +47,11 @@ class SodaDemo {
     private val database: OracleDatabase
 
     init {
-        val url =
-            "jdbc:oracle:thin:@my_atp_low_tls?TNS_ADMIN=/tmp/scratch/tls_wallet/"
+        val urlWithWallet = "jdbc:oracle:thin:@my_atp_low?TNS_ADMIN=/tmp/tls_wallet/"
+        val urlWithoutWallet =
+            "jdbc:oracle:thin:@(description=(retry_count=0)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=localhost))(connect_data=(service_name=my_atp_low.adb.oraclecloud.com))(security=(ssl_server_dn_match=no)))"
+
+        val url = urlWithoutWallet
 
         val props = Properties()
         props.setProperty("user", "admin")
