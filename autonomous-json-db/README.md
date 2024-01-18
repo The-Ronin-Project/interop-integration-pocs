@@ -19,6 +19,7 @@ docker run -d \
 -e WORKLOAD_TYPE='ATP' \
 -e WALLET_PASSWORD=Longpassword1 \
 -e ADMIN_PASSWORD=Longpassword1 \
+-v /tmp/tls_wallet:/u01/app/oracle/wallets/tls_wallet \
 --hostname localhost \
 --cap-add SYS_ADMIN \
 --device /dev/fuse \
@@ -28,24 +29,13 @@ container-registry.oracle.com/database/adb-free:latest
 
 Note the container ID returned by the above command, or look it up using `docker ps`, for the following commands.
 
-In order for this demo to run, we either need to setup our Wallet or we need to update our Java keystore.
-
-### Wallet
-
-In order for the wallet approach to work, we need to export the wallet from the container.
-
-`docker cp adb_container:/u01/app/oracle/wallets/tls_wallet /tmp/tls_wallet`
-
-### Non-Wallet
-
-You need to extract the self-signed certificate from the container:
-`docker cp adb_container:/u01/app/oracle/wallets/tls_wallet/adb_container.cert adb_container.cert`
-
-Then you need to install it in your Java keystore (the first command will cleanup any prior instances):
+In order for this demo to run, we either need to setup our Wallet or we need to update our Java keystore. If you are
+using a wallet, everything is already configured to run locally. If you are not using a wallet, you need to install it
+in your Java keystore (the first command will cleanup any prior instances):
 
 ```shell
-sudo keytool -delete -alias adb_container_certificate -keystore $JAVA_HOME/lib/security/cacerts
-sudo keytool -import -alias adb_container_certificate -keystore $JAVA_HOME/lib/security/cacerts -file adb_container.cert
+sudo keytool -delete -alias adb_container_certificate -cacerts
+sudo keytool -import -alias adb_container_certificate -cacerts -file /tmp/tls_wallet/adb_container.cert
 ```
 
 ## Demo
