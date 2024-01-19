@@ -18,9 +18,10 @@ fun main() {
 
     println("Total patients: ${collection.find().count()}")
 
-    val newPatient = rcdmPatient("sodatest") {
-        identifier.generates(6)
-    }
+    val newPatient =
+        rcdmPatient("sodatest") {
+            identifier.generates(6)
+        }
     println("Inserting new patient: $newPatient")
     demo.insertData(newPatient, collection)
 
@@ -42,42 +43,59 @@ fun main() {
     println("SQL Lookup found $sqlResult")
 }
 
+@Suppress("ktlint:standard:max-line-length")
 class SodaDemo {
     private val connection: Connection
     private val database: OracleDatabase
 
     init {
-        val url =
-            "jdbc:oracle:thin:@my_atp_low_tls?TNS_ADMIN=/tmp/scratch/tls_wallet/"
+        val urlWithWallet = "jdbc:oracle:thin:@my_atp_low?TNS_ADMIN=/tmp/tls_wallet/"
+        val urlWithoutWallet =
+            "jdbc:oracle:thin:@(description=(retry_count=0)(retry_delay=3)(address=(protocol=tcps)(port=1521)(host=localhost))(connect_data=(service_name=my_atp_low.adb.oraclecloud.com))(security=(ssl_server_dn_match=no)))"
+
+        val url = urlWithoutWallet
 
         val props = Properties()
         props.setProperty("user", "admin")
         props.setProperty("password", "Longpassword1")
 
         connection = DriverManager.getConnection(url, props)
-        database = run {
-            val client = OracleRDBMSClient()
-            client.getDatabase(connection)
-        }
+        database =
+            run {
+                val client = OracleRDBMSClient()
+                client.getDatabase(connection)
+            }
     }
 
     fun getCollection(name: String): OracleCollection = database.admin().createCollection(name)
 
-    fun insertData(data: Any, collection: OracleCollection) {
+    fun insertData(
+        data: Any,
+        collection: OracleCollection,
+    ) {
         val document = database.createDocumentFrom(JacksonManager.objectMapper.writeValueAsString(data))
         collection.insert(document)
     }
 
-    fun queryForOne(query: String, collection: OracleCollection): OracleDocument {
+    fun queryForOne(
+        query: String,
+        collection: OracleCollection,
+    ): OracleDocument {
         println(query)
         return collection.find().filter(query).one
     }
 
-    fun query(query: String, collection: OracleCollection): List<OracleDocument> {
+    fun query(
+        query: String,
+        collection: OracleCollection,
+    ): List<OracleDocument> {
         return collection.find().filter(query).all()
     }
 
-    fun sqlFindById(id: String, collection: String): String? {
+    fun sqlFindById(
+        id: String,
+        collection: String,
+    ): String? {
         return connection.prepareStatement("SELECT json_serialize(c.json_document) FROM $collection c WHERE c.json_document.id = :1")
             .use { preparedStatement ->
                 preparedStatement.setString(1, id)

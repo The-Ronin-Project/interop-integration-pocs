@@ -12,11 +12,18 @@ import java.io.File
 import java.io.FileWriter
 import kotlin.system.measureTimeMillis
 
+@Suppress("ktlint:standard:max-line-length")
 class StagingDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
     private val stagingReportService = StagingReportService(epicClient)
     override val jira = "Prior to paradigm change"
+
     override fun main() = TODO("Prior to paradigm change")
-    fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, filename: String = "staging.csv"): Map<String, Patient> {
+
+    fun load(
+        patientsByMrn: Map<String, Patient>,
+        tenant: Tenant,
+        filename: String = "staging.csv",
+    ): Map<String, Patient> {
         logger.info { "Loading staging reports" }
 
         val cancerPatientsByMrn = mutableMapOf<String, Patient>()
@@ -45,25 +52,27 @@ class StagingDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
                     "Histologic Grade",
                     "Histologic System",
                     "Histologic Method",
-                    "JSON"
-                ).joinToString(",") { "\"$it\"" }
+                    "JSON",
+                ).joinToString(",") { "\"$it\"" },
             )
             writer.newLine()
 
             var totalTime: Long = 0
             patientsByMrn.entries.forEachIndexed { index, (mrn, patient) ->
-                val executionTime = measureTimeMillis {
-                    val run = runCatching {
-                        if (loadAndWriteStagingReports(tenant, mrn, patient, writer)) {
-                            cancerPatientsByMrn[mrn] = patient
+                val executionTime =
+                    measureTimeMillis {
+                        val run =
+                            runCatching {
+                                if (loadAndWriteStagingReports(tenant, mrn, patient, writer)) {
+                                    cancerPatientsByMrn[mrn] = patient
+                                }
+                            }
+
+                        if (run.isFailure) {
+                            val exception = run.exceptionOrNull()
+                            logger.error(exception) { "Error processing $mrn: ${exception?.message}" }
                         }
                     }
-
-                    if (run.isFailure) {
-                        val exception = run.exceptionOrNull()
-                        logger.error(exception) { "Error processing $mrn: ${exception?.message}" }
-                    }
-                }
 
                 totalTime += executionTime
                 logger.info { "Completed ${index + 1} of ${patientsByMrn.size}. Last took $executionTime ms. Current average: ${totalTime / (index + 1)}" }
@@ -78,7 +87,7 @@ class StagingDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
         tenant: Tenant,
         mrn: String,
         patient: Patient,
-        writer: BufferedWriter
+        writer: BufferedWriter,
     ): Boolean {
         val stagingReport = stagingReportService.getStagingReportsByPatient(tenant, mrn)
         writeStagingReport(stagingReport, mrn, patient, writer)
@@ -92,7 +101,7 @@ class StagingDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
         stagingReport: GetPatientStagingResponse,
         mrn: String,
         patient: Patient,
-        writer: BufferedWriter
+        writer: BufferedWriter,
     ) {
         val json = JacksonManager.objectMapper.writeValueAsString(stagingReport)
         val escapedJson = StringEscapeUtils.escapeCsv(json)
@@ -124,8 +133,8 @@ class StagingDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
                         stage.diagnosisCode,
                         stage.histologicGrade?.grade,
                         stage.histologicGrade?.system,
-                        stage.histologicGrade?.method
-                    ).joinToString(",") { "\"${it.orEmpty()}\"" } + ",$escapedJson"
+                        stage.histologicGrade?.method,
+                    ).joinToString(",") { "\"${it.orEmpty()}\"" } + ",$escapedJson",
                 )
                 writer.newLine()
             }

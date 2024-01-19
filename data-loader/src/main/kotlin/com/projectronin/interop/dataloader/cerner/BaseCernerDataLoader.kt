@@ -25,13 +25,14 @@ abstract class BaseCernerDataLoader : BaseLoader() {
     private val patientService = CernerPatientService(cernerClient, ehrDataAuthorityClient)
 
     override fun getPatientsForMRNs(mrns: Set<String>): Map<String, Patient> {
-        val keys = mrns.filter { it.isNotBlank() }
-            .associateWith { mrn ->
-                Identifier(
-                    system = Uri(tenant.vendorAs<Epic>().patientMRNSystem),
-                    value = mrn.asFHIR()
-                )
-            }
+        val keys =
+            mrns.filter { it.isNotBlank() }
+                .associateWith { mrn ->
+                    Identifier(
+                        system = Uri(tenant.vendorAs<Epic>().patientMRNSystem),
+                        value = mrn.asFHIR(),
+                    )
+                }
         if (keys.isEmpty()) return emptyMap()
 
         logger.info { "Loading patients for ${keys.size} MRNs" }

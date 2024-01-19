@@ -9,7 +9,10 @@ class ImmunizationService(epicClient: EpicClient) :
     override val fhirURLSearchPart = "/api/FHIR/R4/Immunization"
     override val fhirResourceType = Immunization::class.java
 
-    fun getImmunizationsForPatient(tenant: Tenant, patientFHIRId: String): List<Immunization> {
+    fun getImmunizationsForPatient(
+        tenant: Tenant,
+        patientFHIRId: String,
+    ): List<Immunization> {
         val parameters = mapOf("patient" to patientFHIRId)
         return getResourceListFromSearch(tenant, parameters)
     }

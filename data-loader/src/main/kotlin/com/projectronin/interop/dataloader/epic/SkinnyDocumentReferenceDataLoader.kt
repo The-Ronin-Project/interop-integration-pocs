@@ -19,23 +19,29 @@ class SkinnyDocumentReferenceDataLoader(epicClient: EpicClient) : BaseEpicDataLo
     private val clinicalNoteCategory = "clinical-note"
     private val radiologyResultCategory = "imaging-result"
     override val jira = "Prior to paradigm change"
+
     override fun main() = TODO("Prior to paradigm change")
-    fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant) {
+
+    fun load(
+        patientsByMrn: Map<String, Patient>,
+        tenant: Tenant,
+    ) {
         logger.info { "Loading document references" }
 
         patientsByMrn.map { (mrn, patient) ->
             logger.info { "Getting doc reference for MRN $mrn" }
 
-            val documentReferences = (
-                epicDocumentReferenceService.getDocumentReferences(tenant, patient.id!!.value!!, clinicalNoteCategory) +
-                    epicDocumentReferenceService.getDocumentReferences(tenant, patient.id!!.value!!, radiologyResultCategory)
+            val documentReferences =
+                (
+                    epicDocumentReferenceService.getDocumentReferences(tenant, patient.id!!.value!!, clinicalNoteCategory) +
+                        epicDocumentReferenceService.getDocumentReferences(tenant, patient.id!!.value!!, radiologyResultCategory)
                 ).toSet()
 
             if (documentReferences.isNotEmpty()) {
                 BufferedWriter(FileWriter(File("loaded/$mrn-docreferences.json"))).use { writer ->
                     writer.write(
                         JacksonManager.objectMapper.writerWithDefaultPrettyPrinter()
-                            .writeValueAsString(documentReferences)
+                            .writeValueAsString(documentReferences),
                     )
                 }
             }

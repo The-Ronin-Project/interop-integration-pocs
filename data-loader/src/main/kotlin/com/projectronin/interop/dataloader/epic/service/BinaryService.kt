@@ -22,31 +22,42 @@ import mu.KotlinLogging
 class BinaryService(
     private val epicClient: EpicClient,
     private val authenticationBroker: EHRAuthenticationBroker,
-    private val client: HttpClient
+    private val client: HttpClient,
 ) {
     private val logger = KotlinLogging.logger { }
 
-    fun getBinaryData(tenant: Tenant, binaryFhirId: String): String {
+    fun getBinaryData(
+        tenant: Tenant,
+        binaryFhirId: String,
+    ): String {
         return runBlocking {
             epicClient.get(
                 tenant,
                 "/api/FHIR/R4/Binary/$binaryFhirId",
-                emptyMap()
+                emptyMap(),
             ).httpResponse.bodyAsText()
         }
     }
 
-    fun getBinary(tenant: Tenant, binaryFhirId: String): Binary? {
+    fun getBinary(
+        tenant: Tenant,
+        binaryFhirId: String,
+    ): Binary? {
         return get(tenant, "/api/FHIR/R4/Binary/$binaryFhirId", emptyMap())
     }
 
     /**
      * Stolen from EpicClient and adjusted to use the FHIR JSON ContentType.
      */
-    fun get(tenant: Tenant, urlPart: String, parameters: Map<String, Any?> = mapOf()): Binary? {
+    fun get(
+        tenant: Tenant,
+        urlPart: String,
+        parameters: Map<String, Any?> = mapOf(),
+    ): Binary? {
         // Authenticate
-        val authentication = authenticationBroker.getAuthentication(tenant)
-            ?: throw IllegalStateException("Unable to retrieve authentication for ${tenant.mnemonic}")
+        val authentication =
+            authenticationBroker.getAuthentication(tenant)
+                ?: throw IllegalStateException("Unable to retrieve authentication for ${tenant.mnemonic}")
 
         val requestUrl =
             if (urlPart.first() == '/') {
@@ -55,27 +66,29 @@ class BinaryService(
                 urlPart
             }
 
-        val resource: Resource<*> = runBlocking {
-            val response: HttpResponse = client.get(requestUrl) {
-                headers {
-                    append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
-                }
-                accept(ContentType.Application.FhirJson)
-                parameters.map {
-                    val key = it.key
-                    val value = it.value
-                    if (value is List<*>) {
-                        value.forEach { repetition ->
-                            parameter(key, repetition)
+        val resource: Resource<*> =
+            runBlocking {
+                val response: HttpResponse =
+                    client.get(requestUrl) {
+                        headers {
+                            append(HttpHeaders.Authorization, "Bearer ${authentication.accessToken}")
                         }
-                    } else {
-                        value?.let { parameter(key, value) }
+                        accept(ContentType.Application.FhirJson)
+                        parameters.map {
+                            val key = it.key
+                            val value = it.value
+                            if (value is List<*>) {
+                                value.forEach { repetition ->
+                                    parameter(key, repetition)
+                                }
+                            } else {
+                                value?.let { parameter(key, value) }
+                            }
+                        }
                     }
-                }
-            }
 
-            response.body()
-        }
+                response.body()
+            }
 
         return if (resource is Binary) {
             resource

@@ -15,20 +15,22 @@ class AppointmentService(cernerClient: CernerClient) : BaseCernerService<Appoint
         tenant: Tenant,
         locationFhirID: String,
         minusDays: Int = 1,
-        plusDays: Int = 1
+        plusDays: Int = 1,
     ): List<Appointment> {
         val offset = ZoneOffset.UTC
         val startDate = LocalDate.now().minusDays(minusDays.toLong())
         val endDate = startDate.plusDays(plusDays.toLong())
-        val parameters = mapOf(
-            "location" to locationFhirID,
-            "date" to RepeatingParameter(
-                listOf(
-                    "ge${startDate}T00:00:00$offset",
-                    "lt${endDate.plusDays(1)}T00:00:00$offset"
-                )
+        val parameters =
+            mapOf(
+                "location" to locationFhirID,
+                "date" to
+                    RepeatingParameter(
+                        listOf(
+                            "ge${startDate}T00:00:00$offset",
+                            "lt${endDate.plusDays(1)}T00:00:00$offset",
+                        ),
+                    ),
             )
-        )
         return getResourceListFromSearch(tenant, parameters)
     }
 }

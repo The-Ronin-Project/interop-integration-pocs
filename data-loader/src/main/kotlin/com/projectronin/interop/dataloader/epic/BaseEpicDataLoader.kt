@@ -26,19 +26,21 @@ abstract class BaseEpicDataLoader : BaseLoader() {
     private val patientService = EpicPatientService(epicClient, 5, ehrDataAuthorityClient)
 
     override fun getPatientsForMRNs(mrns: Set<String>): Map<String, Patient> {
-        val paddedMrns = if (tenantMnemonic == "mdaoc") {
-            mrns.map { it.padStart(7, '0') }
-        } else {
-            mrns
-        }
-
-        val keys = paddedMrns.filter { it.isNotBlank() }
-            .associateWith { mrn ->
-                Identifier(
-                    system = Uri(tenant.vendorAs<Epic>().patientMRNSystem),
-                    value = mrn.asFHIR()
-                )
+        val paddedMrns =
+            if (tenantMnemonic == "mdaoc") {
+                mrns.map { it.padStart(7, '0') }
+            } else {
+                mrns
             }
+
+        val keys =
+            paddedMrns.filter { it.isNotBlank() }
+                .associateWith { mrn ->
+                    Identifier(
+                        system = Uri(tenant.vendorAs<Epic>().patientMRNSystem),
+                        value = mrn.asFHIR(),
+                    )
+                }
         if (keys.isEmpty()) return emptyMap()
 
         logger.info { "Loading patients for ${keys.size} MRNs" }

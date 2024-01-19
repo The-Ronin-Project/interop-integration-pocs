@@ -5,7 +5,7 @@ data class LogEntry(
     val host: String,
     val service: String,
     val message: String,
-    val level: LogLevel?
+    val level: LogLevel?,
 )
 
 enum class LogLevel {
@@ -13,5 +13,5 @@ enum class LogLevel {
     WARN,
     INFO,
     DEBUG,
-    TRACE
+    TRACE,
 }

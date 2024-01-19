@@ -83,76 +83,83 @@ class PSJFullDataLoader : BaseEpicDataLoader() {
     private val binaryService = BinaryService(epicClient, ehrAuthenticationBroker, httpClient)
 
     override fun main() {
-        val duration = measureTimeMillis {
-            val patientsByMrn = loadPatients()
-            val totalPatients = patientsByMrn.size
+        val duration =
+            measureTimeMillis {
+                val patientsByMrn = loadPatients()
+                val totalPatients = patientsByMrn.size
 
-            val loadedMedicationIds = mutableSetOf<String>()
+                val loadedMedicationIds = mutableSetOf<String>()
 
-            patientsByMrn.entries.forEachIndexed { index, (mrn, patient) ->
-                uploadResource(mrn, patient)
+                patientsByMrn.entries.forEachIndexed { index, (mrn, patient) ->
+                    uploadResource(mrn, patient)
 
-                logger.info { "Loading CarePlans for patient ${index + 1} of $totalPatients" }
-                val carePlans = loadCarePlans(patient)
-                uploadResources(mrn, carePlans)
+                    logger.info { "Loading CarePlans for patient ${index + 1} of $totalPatients" }
+                    val carePlans = loadCarePlans(patient)
+                    uploadResources(mrn, carePlans)
 
-                logger.info { "Loading RequestGroups for patient ${index + 1} of $totalPatients" }
-                val requestGroups = loadRequestGroups(carePlans)
-                uploadResources(mrn, requestGroups)
+                    logger.info { "Loading RequestGroups for patient ${index + 1} of $totalPatients" }
+                    val requestGroups = loadRequestGroups(carePlans)
+                    uploadResources(mrn, requestGroups)
 
-                logger.info { "Loading MedicationRequests for patient ${index + 1} of $totalPatients" }
-                val medicationRequests = loadMedicationRequests(patient)
-                uploadResources(mrn, medicationRequests)
+                    logger.info { "Loading MedicationRequests for patient ${index + 1} of $totalPatients" }
+                    val medicationRequests = loadMedicationRequests(patient)
+                    uploadResources(mrn, medicationRequests)
 
-                logger.info { "Loading MedicationStatements for patient ${index + 1} of $totalPatients" }
-                val medicationStatements = loadMedicationStatements(patient)
-                uploadResources(mrn, medicationStatements)
+                    logger.info { "Loading MedicationStatements for patient ${index + 1} of $totalPatients" }
+                    val medicationStatements = loadMedicationStatements(patient)
+                    uploadResources(mrn, medicationStatements)
 
-                logger.info { "Loading Medications for patient ${index + 1} of $totalPatients" }
-                val medications = loadMedications(medicationStatements, medicationRequests, loadedMedicationIds)
-                medications.forEach { uploadResource(it.id!!.value!!, it) }
+                    logger.info { "Loading Medications for patient ${index + 1} of $totalPatients" }
+                    val medications = loadMedications(medicationStatements, medicationRequests, loadedMedicationIds)
+                    medications.forEach { uploadResource(it.id!!.value!!, it) }
 
-                logger.info { "Loading Immunizations for patient ${index + 1} of $totalPatients" }
-                val immunizations = loadImmunizations(patient)
-                uploadResources(mrn, immunizations)
+                    logger.info { "Loading Immunizations for patient ${index + 1} of $totalPatients" }
+                    val immunizations = loadImmunizations(patient)
+                    uploadResources(mrn, immunizations)
 
-                logger.info { "Loading Encounters for patient ${index + 1} of $totalPatients" }
-                val encounters = loadEncounters(patient)
-                uploadResources(mrn, encounters)
+                    logger.info { "Loading Encounters for patient ${index + 1} of $totalPatients" }
+                    val encounters = loadEncounters(patient)
+                    uploadResources(mrn, encounters)
 
-                logger.info { "Loading Conditions for patient ${index + 1} of $totalPatients" }
-                val conditions = loadConditions(patient)
-                uploadResources(mrn, conditions)
+                    logger.info { "Loading Conditions for patient ${index + 1} of $totalPatients" }
+                    val conditions = loadConditions(patient)
+                    uploadResources(mrn, conditions)
 
-                logger.info { "Loading Observations for patient ${index + 1} of $totalPatients" }
-                val observations = loadObservations(patient, conditions)
-                uploadResources(mrn, observations)
+                    logger.info { "Loading Observations for patient ${index + 1} of $totalPatients" }
+                    val observations = loadObservations(patient, conditions)
+                    uploadResources(mrn, observations)
 
-                logger.info { "Loading DocumentReferences for patient ${index + 1} of $totalPatients" }
-                val documentReferences = loadDocumentReferences(patient)
-                uploadResources(mrn, documentReferences)
+                    logger.info { "Loading DocumentReferences for patient ${index + 1} of $totalPatients" }
+                    val documentReferences = loadDocumentReferences(patient)
+                    uploadResources(mrn, documentReferences)
 
-                logger.info { "Loading Binaries for patient ${index + 1} of $totalPatients" }
-                loadBinaries(documentReferences)
+                    logger.info { "Loading Binaries for patient ${index + 1} of $totalPatients" }
+                    loadBinaries(documentReferences)
 
-                logger.info { "Completed patient ${index + 1} of $totalPatients" }
-                logger.info { "" }
+                    logger.info { "Completed patient ${index + 1} of $totalPatients" }
+                    logger.info { "" }
+                }
             }
-        }
         logger.info { "Completed load in ${Duration.ofMillis(duration)}" }
     }
 
-    private fun <R : Resource<*>> uploadResource(key: String, value: R) {
+    private fun <R : Resource<*>> uploadResource(
+        key: String,
+        value: R,
+    ) {
         uploadResources(key, listOf(value))
     }
 
-    private fun <R : Resource<*>> uploadResources(key: String, value: Collection<R>) {
+    private fun <R : Resource<*>> uploadResources(
+        key: String,
+        value: Collection<R>,
+    ) {
         writeAndUploadResources(
             tenant,
             key,
             value.toList(),
             timestamp,
-            dryRun = dryRun
+            dryRun = dryRun,
         )
     }
 
@@ -163,34 +170,34 @@ class PSJFullDataLoader : BaseEpicDataLoader() {
         return patientsByMrn
     }
 
-    private fun loadCarePlans(
-        patient: Patient
-    ): List<CarePlan> {
+    private fun loadCarePlans(patient: Patient): List<CarePlan> {
         val carePlans =
             carePlanService.getCarePlansByPatient(tenant, patient.id!!.value!!, CarePlanCategory.ONCOLOGY.code)
 
-        val cycleCarePlans = carePlans.map { carePlan ->
-            carePlan.activity.map { activity ->
-                val carePlanReferences = activity.extension.getReferences("CarePlan")
+        val cycleCarePlans =
+            carePlans.map { carePlan ->
+                carePlan.activity.map { activity ->
+                    val carePlanReferences = activity.extension.getReferences("CarePlan")
 
-                carePlanReferences.mapNotNull { reference ->
-                    val cycleCarePlanId = reference.decomposedId()
-                    cycleCarePlanId?.let {
-                        carePlanService.getByID(tenant, it)
+                    carePlanReferences.mapNotNull { reference ->
+                        val cycleCarePlanId = reference.decomposedId()
+                        cycleCarePlanId?.let {
+                            carePlanService.getByID(tenant, it)
+                        }
                     }
-                }
+                }.flatten()
             }.flatten()
-        }.flatten()
 
         return carePlans + cycleCarePlans
     }
 
     private fun loadRequestGroups(carePlans: List<CarePlan>): List<RequestGroup> {
-        val requestGroupIds = carePlans.map { carePlan ->
-            carePlan.activity.mapNotNull { it.reference }
-                .filter { it.decomposedType() == "RequestGroup" }
-                .mapNotNull { it.decomposedId() }
-        }.flatten()
+        val requestGroupIds =
+            carePlans.map { carePlan ->
+                carePlan.activity.mapNotNull { it.reference }
+                    .filter { it.decomposedType() == "RequestGroup" }
+                    .mapNotNull { it.decomposedId() }
+            }.flatten()
 
         return requestGroupIds.map { id ->
             requestGroupService.getByID(tenant, id)
@@ -208,27 +215,29 @@ class PSJFullDataLoader : BaseEpicDataLoader() {
     private fun loadMedications(
         medicationStatements: List<MedicationStatement>,
         medicationRequests: List<MedicationRequest>,
-        loadedMedicationIds: MutableSet<String>
+        loadedMedicationIds: MutableSet<String>,
     ): List<Medication> {
         logger.info { "Loading Medications" }
 
-        val medicationStatementMedicationIds = medicationStatements.mapNotNull {
-            val medication = it.medication!!
-            if (medication.type == DynamicValueType.REFERENCE) {
-                (medication.value as Reference).decomposedId()
-            } else {
-                null
-            }
-        }.toSet()
+        val medicationStatementMedicationIds =
+            medicationStatements.mapNotNull {
+                val medication = it.medication!!
+                if (medication.type == DynamicValueType.REFERENCE) {
+                    (medication.value as Reference).decomposedId()
+                } else {
+                    null
+                }
+            }.toSet()
 
-        val medicationRequestMedicationIds = medicationRequests.mapNotNull {
-            val medication = it.medication!!
-            if (medication.type == DynamicValueType.REFERENCE) {
-                (medication.value as Reference).decomposedId()
-            } else {
-                null
-            }
-        }.toSet()
+        val medicationRequestMedicationIds =
+            medicationRequests.mapNotNull {
+                val medication = it.medication!!
+                if (medication.type == DynamicValueType.REFERENCE) {
+                    (medication.value as Reference).decomposedId()
+                } else {
+                    null
+                }
+            }.toSet()
 
         val medicationIds = medicationRequestMedicationIds + medicationStatementMedicationIds - loadedMedicationIds
         val medications = medicationService.getMedicationsByFhirId(tenant, medicationIds.toList())
@@ -249,34 +258,45 @@ class PSJFullDataLoader : BaseEpicDataLoader() {
         return loadConditions(patient, "encounter-diagnosis") + loadConditions(patient, "problem-list-item")
     }
 
-    private fun loadConditions(patient: Patient, category: String): List<Condition> {
+    private fun loadConditions(
+        patient: Patient,
+        category: String,
+    ): List<Condition> {
         return conditionService.findConditions(tenant, patient.id!!.value!!, category, "active")
     }
 
-    private fun loadObservations(patient: Patient, conditions: List<Condition>): Set<Observation> {
-        val observationCategories = setOf(
-            "genomics",
-            "laboratory",
-            "social-history",
-            "functional-mental-status",
-            "http://snomed.info/sct|384821006",
-            "http://snomed.info/sct|118228005",
-            "smartdata",
-            "vital-signs"
-        )
+    private fun loadObservations(
+        patient: Patient,
+        conditions: List<Condition>,
+    ): Set<Observation> {
+        val observationCategories =
+            setOf(
+                "genomics",
+                "laboratory",
+                "social-history",
+                "functional-mental-status",
+                "http://snomed.info/sct|384821006",
+                "http://snomed.info/sct|118228005",
+                "smartdata",
+                "vital-signs",
+            )
         val categoryBasedObservations = observationCategories.flatMap { loadObservations(patient, it) }
-        val conditionBasedObservations = conditions.flatMap {
-            observationForConditionService.findObservationsByCondition(tenant, it.id!!.value!!)
-        }
+        val conditionBasedObservations =
+            conditions.flatMap {
+                observationForConditionService.findObservationsByCondition(tenant, it.id!!.value!!)
+            }
         return (categoryBasedObservations + conditionBasedObservations).toSet()
     }
 
-    private fun loadObservations(patient: Patient, category: String): List<Observation> {
+    private fun loadObservations(
+        patient: Patient,
+        category: String,
+    ): List<Observation> {
         return observationService.findObservationsByPatient(
             tenant,
             listOf(patient.id!!.value!!),
             listOf(category),
-            startDate
+            startDate,
         )
     }
 
@@ -318,7 +338,10 @@ class PSJFullDataLoader : BaseEpicDataLoader() {
         }
     }
 
-    private fun loadBinary(binaryFhirId: String, extension: String) {
+    private fun loadBinary(
+        binaryFhirId: String,
+        extension: String,
+    ) {
         val binaryFileName = "loaded/binary/$binaryFhirId.$extension"
         val file = File(binaryFileName)
         if (listOf("pdf", "jpg").contains(extension)) {
@@ -341,15 +364,16 @@ class PSJFullDataLoader : BaseEpicDataLoader() {
     }
 
     fun List<Extension>.getReferences(referenceType: String? = null): List<Reference> {
-        val references = this.mapNotNull { extension ->
-            extension.value?.let {
-                if (it.type == DynamicValueType.REFERENCE) {
-                    it.value as Reference
-                } else {
-                    null
+        val references =
+            this.mapNotNull { extension ->
+                extension.value?.let {
+                    if (it.type == DynamicValueType.REFERENCE) {
+                        it.value as Reference
+                    } else {
+                        null
+                    }
                 }
             }
-        }
         return referenceType?.let {
             references.filter { reference -> reference.decomposedType() == referenceType }
         } ?: references

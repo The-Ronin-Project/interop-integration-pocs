@@ -49,9 +49,7 @@ class CarePlanDataLoader : BaseEpicDataLoader() {
         }
     }
 
-    private fun loadCarePlans(
-        patient: Patient
-    ): List<CarePlan> {
+    private fun loadCarePlans(patient: Patient): List<CarePlan> {
         val carePlans =
             carePlanService.getCarePlansByPatient(tenant, patient.id!!.value!!, CarePlanCategory.ONCOLOGY.code)
 
@@ -76,7 +74,10 @@ class CarePlanDataLoader : BaseEpicDataLoader() {
         }.flatten().toSet()
     }
 
-    private fun loadCarePlans(requestLoad: Set<String>, previouslyLoadedIds: Set<String>): List<CarePlan> {
+    private fun loadCarePlans(
+        requestLoad: Set<String>,
+        previouslyLoadedIds: Set<String>,
+    ): List<CarePlan> {
         val toLoad = requestLoad - previouslyLoadedIds
         if (toLoad.isEmpty()) {
             return emptyList()
@@ -97,11 +98,12 @@ class CarePlanDataLoader : BaseEpicDataLoader() {
     }
 
     private fun loadRequestGroups(carePlans: List<CarePlan>): List<RequestGroup> {
-        val requestGroupIds = carePlans.map { carePlan ->
-            carePlan.activity.mapNotNull { it.reference }
-                .filter { it.decomposedType() == "RequestGroup" }
-                .mapNotNull { it.decomposedId() }
-        }.flatten()
+        val requestGroupIds =
+            carePlans.map { carePlan ->
+                carePlan.activity.mapNotNull { it.reference }
+                    .filter { it.decomposedType() == "RequestGroup" }
+                    .mapNotNull { it.decomposedId() }
+            }.flatten()
 
         return requestGroupIds.map { id ->
             requestGroupService.getByID(tenant, id)
@@ -110,15 +112,16 @@ class CarePlanDataLoader : BaseEpicDataLoader() {
 
     // Might be worth adding this interop-fhir at some point
     fun List<Extension>.getReferences(referenceType: String? = null): List<Reference> {
-        val references = this.mapNotNull { extension ->
-            extension.value?.let {
-                if (it.type == DynamicValueType.REFERENCE) {
-                    it.value as Reference
-                } else {
-                    null
+        val references =
+            this.mapNotNull { extension ->
+                extension.value?.let {
+                    if (it.type == DynamicValueType.REFERENCE) {
+                        it.value as Reference
+                    } else {
+                        null
+                    }
                 }
             }
-        }
         return referenceType?.let {
             references.filter { reference -> reference.decomposedType() == referenceType }
         } ?: references

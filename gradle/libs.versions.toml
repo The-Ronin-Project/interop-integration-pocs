@@ -5,11 +5,13 @@ interop-common = "3.11.0"
 interop-datalake = "8.2.0"
 interop-ehr = "10.8.2"
 interop-fhir = "8.8.1"
+interop-gradle = "4.0.2"
 interop-validation = "3.0.0"
 mockk = "1.13.7"
 oracle-db = "21.1.0.0"
 ronin-test = "0.2.0"
 soda = "1.1.7.1"
+spring-boot = "3.2.0"
 
 [libraries]
 commons-text = { module = "org.apache.commons:commons-text", version.ref = "commons-text" }
@@ -27,15 +29,25 @@ interop-fhir = { module = "com.projectronin.interop.fhir:interop-fhir", version.
 interop-fhirGenerators = { module = "com.projectronin.interop.fhir:interop-fhir-generators", version.ref = "interop-fhir" }
 interop-validation-client = { module = "com.projectronin.interop.validation:interop-validation-client", version.ref = "interop-validation" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+ojdbc = { module = "com.oracle.database.jdbc:ojdbc8", version.ref = "oracle-db" }
 oraclepki = { module = "com.oracle.database.security:oraclepki", version.ref = "oracle-db" }
 osdt_cert = { module = "com.oracle.database.security:osdt_cert", version.ref = "oracle-db" }
 osdt_core = { module = "com.oracle.database.security:osdt_core", version.ref = "oracle-db" }
 ronin-test-data-generator = { module = "com.projectronin.test:ronin-test-data-generator", version.ref = "ronin-test" }
 soda = { module = "com.oracle.database.soda:orajsoda", version.ref = "soda" }
+spring-boot-parent = { module = "org.springframework.boot:spring-boot-parent", version.ref = "spring-boot" }
+ucp = { module = "com.oracle.database.jdbc:ucp", version.ref = "oracle-db" }
 
 [bundles]
+ojdbc = [
+    "ojdbc",
+    "ucp"
+]
 oracle-security = [
     "oraclepki",
     "osdt_cert",
     "osdt_core"
 ]
+
+[plugins]
+interop-spring-boot = { id = "com.projectronin.interop.gradle.spring-boot", version.ref = "interop-gradle" }

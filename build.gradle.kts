@@ -2,9 +2,10 @@ plugins {
     kotlin("jvm") version "1.8.0"
     `kotlin-dsl`
     jacoco
-    id("org.jlleitschuh.gradle.ktlint") version "11.3.1"
     id("pl.allegro.tech.build.axion-release") version "1.14.4"
     id("com.projectronin.interop.gradle.base") version "3.0.0"
+
+    alias(libs.plugins.interop.spring.boot) apply false
 }
 
 allprojects {
@@ -37,10 +38,11 @@ allprojects {
             if (!supportedHeads.contains(position.branch)) {
                 val jiraBranchRegex = Regex("(\\w+)-(\\d+)-(.+)")
                 val match = jiraBranchRegex.matchEntire(position.branch)
-                val branchExtension = match?.let {
-                    val (project, number, _) = it.destructured
-                    "$project$number"
-                } ?: position.branch
+                val branchExtension =
+                    match?.let {
+                        val (project, number, _) = it.destructured
+                        "$project$number"
+                    } ?: position.branch
 
                 "$versionFromTag-$branchExtension"
             } else {

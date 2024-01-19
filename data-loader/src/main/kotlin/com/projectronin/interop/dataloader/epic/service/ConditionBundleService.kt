@@ -11,28 +11,30 @@ class ConditionBundleService(epicClient: EpicClient) :
 
     fun findConditionsAndObservations(
         tenant: Tenant,
-        patientFhirId: String
+        patientFhirId: String,
     ): Bundle {
-        val parameters = mapOf(
-            "patient" to patientFhirId,
-            "category" to "problem-list-item",
-            "clinical-status" to "active",
-            "_include" to "Condition:Observation"
-        )
+        val parameters =
+            mapOf(
+                "patient" to patientFhirId,
+                "category" to "problem-list-item",
+                "clinical-status" to "active",
+                "_include" to "Condition:Observation",
+            )
 
         return getBundleWithPaging(tenant, parameters)
     }
 
     fun findConditionsWithStaging(
         tenant: Tenant,
-        patientFhirId: String
+        patientFhirId: String,
     ): Bundle {
-        val parameters = mapOf(
-            "patient" to patientFhirId,
-            "category" to "problem-list-item",
-            "clinical-status" to "active",
-            "_include" to "Condition:assessment"
-        )
+        val parameters =
+            mapOf(
+                "patient" to patientFhirId,
+                "category" to "problem-list-item",
+                "clinical-status" to "active",
+                "_include" to "Condition:assessment",
+            )
 
         return getBundleWithPaging(tenant, parameters)
     }

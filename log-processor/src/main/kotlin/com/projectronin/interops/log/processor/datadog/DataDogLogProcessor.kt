@@ -13,14 +13,15 @@ abstract class DataDogLogProcessor {
             val service = StringUtils.strip(it[2], "\"")
             val message = it[3]
 
-            val level = when (message.split(" ")[0]) {
-                "ERROR" -> LogLevel.ERROR
-                "WARN" -> LogLevel.WARN
-                "INFO" -> LogLevel.INFO
-                "DEBUG" -> LogLevel.DEBUG
-                "TRACE" -> LogLevel.TRACE
-                else -> null
-            }
+            val level =
+                when (message.split(" ")[0]) {
+                    "ERROR" -> LogLevel.ERROR
+                    "WARN" -> LogLevel.WARN
+                    "INFO" -> LogLevel.INFO
+                    "DEBUG" -> LogLevel.DEBUG
+                    "TRACE" -> LogLevel.TRACE
+                    else -> null
+                }
 
             LogEntry(date, host, service, message, level)
         }

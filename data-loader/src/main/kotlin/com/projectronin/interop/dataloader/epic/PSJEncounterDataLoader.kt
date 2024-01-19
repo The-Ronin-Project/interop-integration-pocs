@@ -15,6 +15,7 @@ class PSJEncounterDataLoader : BaseEpicDataLoader() {
     override val jira = "INT-1770"
     override val tenantMnemonic = "v7r1eczk"
     private val encounterService = EpicEncounterService(epicClient)
+
     override fun main() {
         val patientsByMrn = getPatientsForMRNs(getMRNs())
         val timeStamp = System.currentTimeMillis().toString()
@@ -28,16 +29,18 @@ class PSJEncounterDataLoader : BaseEpicDataLoader() {
             val mrn = it.key
             val fhirId = patient.id?.value!!
             logger.info { "Loading encounters for $mrn" }
-            val run = runCatching {
-                val encounters = encounterService.findPatientEncounters(
-                    tenant = tenant,
-                    patientFhirId = fhirId,
-                    startDate = startDate,
-                    endDate = endDate
-                )
-                logger.info { "Found ${encounters.size} encounters" }
-                totalEncounters.put(mrn, encounters)
-            }
+            val run =
+                runCatching {
+                    val encounters =
+                        encounterService.findPatientEncounters(
+                            tenant = tenant,
+                            patientFhirId = fhirId,
+                            startDate = startDate,
+                            endDate = endDate,
+                        )
+                    logger.info { "Found ${encounters.size} encounters" }
+                    totalEncounters.put(mrn, encounters)
+                }
 
             if (run.isFailure) {
                 val exception = run.exceptionOrNull()

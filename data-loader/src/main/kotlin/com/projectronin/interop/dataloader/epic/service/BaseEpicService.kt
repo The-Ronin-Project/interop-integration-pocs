@@ -18,34 +18,41 @@ abstract class BaseEpicService<T : Resource<T>>(val epicClient: EpicClient) {
     private val batchSize = 10
     private val standardParameters: Map<String, Any> = mapOf("_count" to 50)
 
-    fun getResourceListFromSearch(tenant: Tenant, parameters: Map<String, Any?>): List<T> {
+    fun getResourceListFromSearch(
+        tenant: Tenant,
+        parameters: Map<String, Any?>,
+    ): List<T> {
         return getBundleWithPaging(tenant, parameters).entry.mapNotNull { it.resource }
             .filterIsInstance(fhirResourceType)
     }
 
-    fun getResourceListFromSearchSTU3(tenant: Tenant, parameters: Map<String, Any?>): List<T> {
+    fun getResourceListFromSearchSTU3(
+        tenant: Tenant,
+        parameters: Map<String, Any?>,
+    ): List<T> {
         return getBundleWithPagingSTU3(tenant, parameters).entry.mapNotNull { it.resource }
             .filterIsInstance(fhirResourceType)
     }
 
     fun getBundleWithPaging(
         tenant: Tenant,
-        parameters: Map<String, Any?>
+        parameters: Map<String, Any?>,
     ): Bundle {
         val standardizedParameters = standardizeParameters(parameters)
 
         val responses: MutableList<Bundle> = mutableListOf()
         var nextURL: String? = null
         do {
-            val bundle = runBlocking {
-                val httpResponse =
-                    if (nextURL == null) {
-                        epicClient.get(tenant, fhirURLSearchPart, standardizedParameters)
-                    } else {
-                        epicClient.get(tenant, nextURL!!)
-                    }
-                httpResponse.body<Bundle>()
-            }
+            val bundle =
+                runBlocking {
+                    val httpResponse =
+                        if (nextURL == null) {
+                            epicClient.get(tenant, fhirURLSearchPart, standardizedParameters)
+                        } else {
+                            epicClient.get(tenant, nextURL!!)
+                        }
+                    httpResponse.body<Bundle>()
+                }
 
             responses.add(bundle)
             nextURL = bundle.link.firstOrNull { it.relation?.value == "next" }?.url?.value
@@ -55,22 +62,23 @@ abstract class BaseEpicService<T : Resource<T>>(val epicClient: EpicClient) {
 
     fun getBundleWithPagingSTU3(
         tenant: Tenant,
-        parameters: Map<String, Any?>
+        parameters: Map<String, Any?>,
     ): Bundle {
         val standardizedParameters = standardizeParameters(parameters)
 
         val responses: MutableList<Bundle> = mutableListOf()
         var nextURL: String? = null
         do {
-            val bundle = runBlocking {
-                val httpResponse =
-                    if (nextURL == null) {
-                        epicClient.get(tenant, fhirURLSearchPart, standardizedParameters)
-                    } else {
-                        epicClient.get(tenant, nextURL!!)
-                    }
-                httpResponse.body<STU3Bundle>()
-            }
+            val bundle =
+                runBlocking {
+                    val httpResponse =
+                        if (nextURL == null) {
+                            epicClient.get(tenant, fhirURLSearchPart, standardizedParameters)
+                        } else {
+                            epicClient.get(tenant, nextURL!!)
+                        }
+                    httpResponse.body<STU3Bundle>()
+                }
 
             responses.add(bundle.transformToR4())
             nextURL = bundle.link.firstOrNull { it.relation?.value == "next" }?.url?.value
@@ -78,46 +86,55 @@ abstract class BaseEpicService<T : Resource<T>>(val epicClient: EpicClient) {
         return mergeResponses(responses)
     }
 
-    fun mergeResponses(
-        responses: List<Bundle>
-    ): Bundle {
+    fun mergeResponses(responses: List<Bundle>): Bundle {
         var bundle = responses.first()
         responses.subList(1, responses.size).forEach { bundle = mergeBundles(bundle, it) }
         return bundle
     }
 
     fun standardizeParameters(parameters: Map<String, Any?>): Map<String, Any?> {
-        val parametersToAdd = standardParameters.mapNotNull {
-            if (parameters.containsKey(it.key)) {
-                null
-            } else {
-                it.toPair()
+        val parametersToAdd =
+            standardParameters.mapNotNull {
+                if (parameters.containsKey(it.key)) {
+                    null
+                } else {
+                    it.toPair()
+                }
             }
-        }
         return parameters + parametersToAdd
     }
 
-    fun searchByID(tenant: Tenant, resourceFHIRId: String): T {
+    fun searchByID(
+        tenant: Tenant,
+        resourceFHIRId: String,
+    ): T {
         return runBlocking {
             epicClient.get(tenant, "$fhirURLSearchPart?_id=$resourceFHIRId")
                 .body(TypeInfo(fhirResourceType.kotlin, fhirResourceType))
         }
     }
 
-    fun getByID(tenant: Tenant, resourceFHIRId: String): T {
+    fun getByID(
+        tenant: Tenant,
+        resourceFHIRId: String,
+    ): T {
         return runBlocking {
             epicClient.get(tenant, "$fhirURLSearchPart/$resourceFHIRId")
                 .body(TypeInfo(fhirResourceType.kotlin, fhirResourceType))
         }
     }
 
-    fun getByIDs(tenant: Tenant, resourceFHIRIds: List<String>): Map<String, T> {
+    fun getByIDs(
+        tenant: Tenant,
+        resourceFHIRIds: List<String>,
+    ): Map<String, T> {
         return runBlocking {
             val chunkedIds = resourceFHIRIds.toSet().chunked(batchSize)
-            val resource = chunkedIds.map { idSubset ->
-                val parameters = mapOf("_id" to idSubset)
-                getResourceListFromSearch(tenant, parameters)
-            }.flatten()
+            val resource =
+                chunkedIds.map { idSubset ->
+                    val parameters = mapOf("_id" to idSubset)
+                    getResourceListFromSearch(tenant, parameters)
+                }.flatten()
             resource.associateBy { it.id!!.value!! }
         }
     }

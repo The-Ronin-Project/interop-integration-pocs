@@ -5,24 +5,31 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.projectronin.interop.ehr.epic.apporchard.model.IDType
 import com.projectronin.interop.ehr.epic.client.EpicClient
 import com.projectronin.interop.tenant.config.model.Tenant
-import io.ktor.client.call.body
 import kotlinx.coroutines.runBlocking
 
+@Suppress("ktlint:standard:max-line-length")
 class StagingReportService(private val epicClient: EpicClient) {
-    private val stagingSearchUrlPart = "/api/epic/2018/Clinical/Oncology/GetPatientStagingDataEpic/Clinical/Oncology/Staging/GetPatientData/false"
+    private val stagingSearchUrlPart =
+        "/api/epic/2018/Clinical/Oncology/GetPatientStagingDataEpic/Clinical/Oncology/Staging/GetPatientData/false"
 
-    fun getStagingReportsByPatient(tenant: Tenant, mrn: String): GetPatientStagingResponse {
-        val request = GetPatientStagingRequest(
-            signedOnly = false,
-            patientId = IDType(
-                id = mrn,
-                type = "ORCA MRN"
-            ),
-            auditUserId = IDType(
-                id = "",
-                type = ""
+    fun getStagingReportsByPatient(
+        tenant: Tenant,
+        mrn: String,
+    ): GetPatientStagingResponse {
+        val request =
+            GetPatientStagingRequest(
+                signedOnly = false,
+                patientId =
+                    IDType(
+                        id = mrn,
+                        type = "ORCA MRN",
+                    ),
+                auditUserId =
+                    IDType(
+                        id = "",
+                        type = "",
+                    ),
             )
-        )
 
         return runBlocking {
             val httpResponse = epicClient.post(tenant, stagingSearchUrlPart, request)
@@ -34,12 +41,12 @@ class StagingReportService(private val epicClient: EpicClient) {
 data class GetPatientStagingRequest(
     val signedOnly: Boolean? = false,
     val patientId: IDType,
-    val auditUserId: IDType
+    val auditUserId: IDType,
 )
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 data class GetPatientStagingResponse(
-    val stages: List<PatientStage> = listOf()
+    val stages: List<PatientStage> = listOf(),
 )
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
@@ -61,12 +68,12 @@ data class PatientStage(
     val diagnosisDate: String?,
     val diagnosisCodeSet: String?,
     val diagnosisCode: String?,
-    val histologicGrade: HistologicGrade?
+    val histologicGrade: HistologicGrade?,
 )
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy::class)
 data class HistologicGrade(
     val grade: String?,
     val system: String?,
-    val method: String?
+    val method: String?,
 )

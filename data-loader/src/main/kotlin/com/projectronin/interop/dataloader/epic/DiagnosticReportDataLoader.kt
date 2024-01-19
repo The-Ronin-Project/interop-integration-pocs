@@ -17,17 +17,23 @@ import java.io.File
 import java.io.FileWriter
 import kotlin.system.measureTimeMillis
 
+@Suppress("ktlint:standard:max-line-length")
 class DiagnosticReportDataLoader(
     epicClient: EpicClient,
     authenticationBroker: EHRAuthenticationBroker,
-    httpClient: HttpClient
+    httpClient: HttpClient,
 ) : BaseEpicDataLoader() {
     private val diagnosticReportService = DiagnosticReportService(epicClient)
     private val binaryService = BinaryService(epicClient, authenticationBroker, httpClient)
     override val jira = "Prior to paradigm change"
+
     override fun main() = TODO("Prior to paradigm change")
 
-    fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, filename: String = "diagnostics.csv") {
+    fun load(
+        patientsByMrn: Map<String, Patient>,
+        tenant: Tenant,
+        filename: String = "diagnostics.csv",
+    ) {
         logger.info { "Loading diagnostic reports" }
         BufferedWriter(FileWriter(File(filename))).use { writer ->
             writer.write(""""MRN","Diagnostic Report ID","Effective Date","Code Type","Status","Title","Content Type","Content"""")
@@ -35,16 +41,18 @@ class DiagnosticReportDataLoader(
 
             var totalTime: Long = 0
             patientsByMrn.entries.forEachIndexed { index, (mrn, patient) ->
-                val executionTime = measureTimeMillis {
-                    val run = runCatching {
-                        loadAndWriteDiagnosticReports(patient, tenant, mrn, writer)
-                    }
+                val executionTime =
+                    measureTimeMillis {
+                        val run =
+                            runCatching {
+                                loadAndWriteDiagnosticReports(patient, tenant, mrn, writer)
+                            }
 
-                    if (run.isFailure) {
-                        val exception = run.exceptionOrNull()
-                        logger.error(exception) { "Error processing $mrn: ${exception?.message}" }
+                        if (run.isFailure) {
+                            val exception = run.exceptionOrNull()
+                            logger.error(exception) { "Error processing $mrn: ${exception?.message}" }
+                        }
                     }
-                }
 
                 totalTime += executionTime
                 logger.info { "Completed ${index + 1} of ${patientsByMrn.size}. Last took $executionTime ms. Current average: ${totalTime / (index + 1)}" }
@@ -57,7 +65,7 @@ class DiagnosticReportDataLoader(
         patient: Patient,
         tenant: Tenant,
         mrn: String,
-        writer: BufferedWriter
+        writer: BufferedWriter,
     ) {
         getDiagnosticReportsForPatient(patient, tenant).forEachIndexed { index, diagnosticReport ->
             writeDiagnosticReport(diagnosticReport, mrn, tenant, writer)
@@ -65,26 +73,29 @@ class DiagnosticReportDataLoader(
         }
     }
 
-    private fun getDiagnosticReportsForPatient(patient: Patient, tenant: Tenant): List<DiagnosticReport> =
-        diagnosticReportService.getDiagnosticReportsByPatient(tenant, patient.id!!.value!!)
+    private fun getDiagnosticReportsForPatient(
+        patient: Patient,
+        tenant: Tenant,
+    ): List<DiagnosticReport> = diagnosticReportService.getDiagnosticReportsByPatient(tenant, patient.id!!.value!!)
 
     private fun writeDiagnosticReport(
         diagnosticReport: DiagnosticReport,
         mrn: String,
         tenant: Tenant,
-        writer: BufferedWriter
+        writer: BufferedWriter,
     ) {
-        val date = diagnosticReport.effective?.let {
-            when (it.type) {
-                DynamicValueType.DATE_TIME -> (it.value as DateTime).value
-                DynamicValueType.PERIOD -> {
-                    val period = (it.value as Period)
-                    "${period.start?.value} - ${period.end?.value}"
-                }
+        val date =
+            diagnosticReport.effective?.let {
+                when (it.type) {
+                    DynamicValueType.DATE_TIME -> (it.value as DateTime).value
+                    DynamicValueType.PERIOD -> {
+                        val period = (it.value as Period)
+                        "${period.start?.value} - ${period.end?.value}"
+                    }
 
-                else -> null
+                    else -> null
+                }
             }
-        }
         diagnosticReport.presentedForm.forEach { attachment ->
             val binaryFhirId = attachment.url?.value?.removePrefix("Binary/")
             if (binaryFhirId == null) {
@@ -93,7 +104,9 @@ class DiagnosticReportDataLoader(
             }
             val binary = binaryService.getBinaryData(tenant, binaryFhirId)
             val escapedBinary = StringEscapeUtils.escapeCsv(binary)
-            writer.write(""""$mrn","${diagnosticReport.id!!.value}","$date","${diagnosticReport.code?.text?.value}","${diagnosticReport.status?.value}","${attachment.title?.value}","${attachment.contentType?.value}",$escapedBinary""")
+            writer.write(
+                """"$mrn","${diagnosticReport.id!!.value}","$date","${diagnosticReport.code?.text?.value}","${diagnosticReport.status?.value}","${attachment.title?.value}","${attachment.contentType?.value}",$escapedBinary""",
+            )
             writer.newLine()
         }
     }

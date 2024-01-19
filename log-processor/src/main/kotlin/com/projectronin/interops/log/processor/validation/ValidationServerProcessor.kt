@@ -37,15 +37,16 @@ class ValidationServerProcessor {
         var lastSeen: UUID? = null
         val errors = mutableMapOf<Error, Int>()
         while (true) {
-            val resources = runBlocking {
-                resourceClient.getResources(
-                    listOf(ResourceStatus.REPORTED),
-                    Order.DESC,
-                    25,
-                    lastSeen,
-                    organizationId = tenant
-                )
-            }
+            val resources =
+                runBlocking {
+                    resourceClient.getResources(
+                        listOf(ResourceStatus.REPORTED),
+                        Order.DESC,
+                        25,
+                        lastSeen,
+                        organizationId = tenant,
+                    )
+                }
             if (resources.isEmpty()) break
 
             resources.filter { it.severity == Severity.FAILED && it.createDtTm >= after }
@@ -71,6 +72,6 @@ class ValidationServerProcessor {
     data class Error(
         val resourceType: String,
         val location: String,
-        val code: String
+        val code: String,
     )
 }

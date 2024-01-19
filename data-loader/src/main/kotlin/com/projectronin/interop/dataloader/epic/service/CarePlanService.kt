@@ -8,11 +8,16 @@ class CarePlanService(epicClient: EpicClient) : BaseEpicService<CarePlan>(epicCl
     override val fhirURLSearchPart = "/api/FHIR/R4/CarePlan"
     override val fhirResourceType = CarePlan::class.java
 
-    fun getCarePlansByPatient(tenant: Tenant, patientFhirId: String, category: String): List<CarePlan> {
-        val parameters = mapOf(
-            "patient" to patientFhirId,
-            "category" to category
-        )
+    fun getCarePlansByPatient(
+        tenant: Tenant,
+        patientFhirId: String,
+        category: String,
+    ): List<CarePlan> {
+        val parameters =
+            mapOf(
+                "patient" to patientFhirId,
+                "category" to category,
+            )
         return getResourceListFromSearch(tenant, parameters)
     }
 }
@@ -22,5 +27,5 @@ enum class CarePlanCategory(val category: String, val code: String) {
     LONGITUDINAL("Longitudinal", "38717003"),
     ENCOUNTER_LEVEL("Encounter_Level", "734163000"),
     OUTPATIENT("Outpatient", "736271009"),
-    PATIENT_EDUCATION("Patient_Education", "409073007")
+    PATIENT_EDUCATION("Patient_Education", "409073007"),
 }
