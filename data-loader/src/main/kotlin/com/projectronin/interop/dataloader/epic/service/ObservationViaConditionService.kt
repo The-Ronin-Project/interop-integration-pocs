@@ -11,12 +11,13 @@ class ObservationViaConditionService(epicClient: EpicClient) :
 
     fun findObservationsByCondition(
         tenant: Tenant,
-        conditionId: String
+        conditionId: String,
     ): List<Observation> {
-        val parameters = mapOf(
-            "_id" to conditionId,
-            "_include" to "Condition:assessment"
-        )
+        val parameters =
+            mapOf(
+                "_id" to conditionId,
+                "_include" to "Condition:assessment",
+            )
         return getResourceListFromSearch(tenant, parameters)
     }
 }

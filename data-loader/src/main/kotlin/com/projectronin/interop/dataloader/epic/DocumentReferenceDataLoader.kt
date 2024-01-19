@@ -19,11 +19,12 @@ import kotlin.io.path.createDirectories
 class DocumentReferenceDataLoader(
     epicClient: EpicClient,
     authenticationBroker: EHRAuthenticationBroker,
-    httpClient: HttpClient
+    httpClient: HttpClient,
 ) : BaseEpicDataLoader() {
     private val documentReferenceService = DocumentReferenceService(epicClient)
     private val binaryService = BinaryService(epicClient, authenticationBroker, httpClient)
     override val jira = "Prior to paradigm change"
+
     override fun main() = TODO("Prior to paradigm change")
 
     private val clinicalNoteCategory = "clinical-note"
@@ -46,7 +47,7 @@ class DocumentReferenceDataLoader(
     fun load(
         patientsByMrn: Map<String, Patient>,
         tenant: Tenant,
-        timeStamp: String = System.currentTimeMillis().toString()
+        timeStamp: String = System.currentTimeMillis().toString(),
     ) {
         runCatching { Paths.get("loaded/docRef/binary").createDirectories() }
 
@@ -132,7 +133,10 @@ class DocumentReferenceDataLoader(
         contentTypeCounts.entries.sortedBy { it.value }.forEach { logger.info { "${it.key}: ${it.value}" } }
     }
 
-    private fun increment(value: String, map: MutableMap<String, Int>) {
+    private fun increment(
+        value: String,
+        map: MutableMap<String, Int>,
+    ) {
         map[value] = 1 + (map[value] ?: 0)
     }
 }

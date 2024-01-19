@@ -14,17 +14,19 @@ class ObservationService(cernerClient: CernerClient) : BaseCernerService<Observa
     fun findObservationsByPatient(
         tenant: Tenant,
         patientFhirIds: List<String>,
-        startDate: LocalDate?
+        startDate: LocalDate?,
     ): List<Observation> {
-        val observationResponses = patientFhirIds.chunked(1) {
-            logger.info { "finding observations for patient $it" }
-            val parameters = mapOf(
-                "patient" to it.joinToString(separator = ",")
-            ) + if (startDate == null) emptyMap() else mapOf("date" to "ge$startDate")
-            val results = getResourceListFromSearch(tenant, parameters)
-            logger.info { "found ${results.size}" }
-            results
-        }
+        val observationResponses =
+            patientFhirIds.chunked(1) {
+                logger.info { "finding observations for patient $it" }
+                val parameters =
+                    mapOf(
+                        "patient" to it.joinToString(separator = ","),
+                    ) + if (startDate == null) emptyMap() else mapOf("date" to "ge$startDate")
+                val results = getResourceListFromSearch(tenant, parameters)
+                logger.info { "found ${results.size}" }
+                results
+            }
         return observationResponses.flatten()
     }
 }

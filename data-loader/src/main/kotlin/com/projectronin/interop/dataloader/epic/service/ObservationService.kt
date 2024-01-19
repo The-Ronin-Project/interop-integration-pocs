@@ -16,15 +16,17 @@ class ObservationService(epicClient: EpicClient) :
         tenant: Tenant,
         patientFhirIds: List<String>,
         observationCategoryCodes: List<String>,
-        startDate: LocalDate?
+        startDate: LocalDate?,
     ): List<Observation> {
-        val observationResponses = patientFhirIds.chunked(1) {
-            val parameters = mapOf(
-                "patient" to it.joinToString(separator = ","),
-                "category" to observationCategoryCodes.toSearchTokens().toOrParams()
-            ) + if (startDate == null) emptyMap() else mapOf("date" to "ge$startDate")
-            getResourceListFromSearch(tenant, parameters)
-        }
+        val observationResponses =
+            patientFhirIds.chunked(1) {
+                val parameters =
+                    mapOf(
+                        "patient" to it.joinToString(separator = ","),
+                        "category" to observationCategoryCodes.toSearchTokens().toOrParams(),
+                    ) + if (startDate == null) emptyMap() else mapOf("date" to "ge$startDate")
+                getResourceListFromSearch(tenant, parameters)
+            }
         return observationResponses.flatten()
     }
 }

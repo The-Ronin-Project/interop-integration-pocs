@@ -9,9 +9,10 @@ class LocationService(cernerClient: CernerClient) : BaseCernerService<Location>(
     override val fhirResourceType = Location::class.java
 
     fun getSomeLocations(tenant: Tenant): List<Location> {
-        val parameters = mapOf(
-            "address-state" to "MO"
-        )
+        val parameters =
+            mapOf(
+                "address-state" to "MO",
+            )
         return getResourceListFromSearch(tenant, parameters)
     }
 }

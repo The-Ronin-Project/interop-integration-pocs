@@ -8,5 +8,8 @@ class ObservationBundleService(epicClient: EpicClient) : BaseEpicService<Bundle>
     override val fhirURLSearchPart = "/api/FHIR/R4/Observation"
     override val fhirResourceType = Bundle::class.java
 
-    fun getObservationBundle(tenant: Tenant, observationFhirId: String): Bundle = searchByID(tenant, observationFhirId)
+    fun getObservationBundle(
+        tenant: Tenant,
+        observationFhirId: String,
+    ): Bundle = searchByID(tenant, observationFhirId)
 }

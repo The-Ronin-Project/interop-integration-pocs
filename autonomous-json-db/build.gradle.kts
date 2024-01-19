@@ -1,3 +1,7 @@
+plugins {
+    alias(libs.plugins.interop.spring.boot)
+}
+
 dependencies {
     implementation(libs.soda)
     implementation(libs.interop.ehr.ronin.generators)
@@ -8,4 +12,7 @@ dependencies {
 
     implementation(libs.bundles.ojdbc)
     implementation(libs.bundles.oracle.security)
+
+    implementation(platform(libs.spring.boot.parent))
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
 }

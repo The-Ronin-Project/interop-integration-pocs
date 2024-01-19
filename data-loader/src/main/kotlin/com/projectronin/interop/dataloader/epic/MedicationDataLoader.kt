@@ -18,13 +18,20 @@ import java.io.File
 import java.io.FileWriter
 import kotlin.system.measureTimeMillis
 
+@Suppress("ktlint:standard:max-line-length")
 class MedicationDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
     private val medicationService = EpicMedicationService(epicClient, 5)
     private val medicationStatementService = EpicMedicationStatementService(epicClient)
     private val medicationRequestService = MedicationRequestService(epicClient)
     override val jira = "Prior to paradigm change"
+
     override fun main() = TODO("Prior to paradigm change")
-    fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, filename: String = "medications.csv") {
+
+    fun load(
+        patientsByMrn: Map<String, Patient>,
+        tenant: Tenant,
+        filename: String = "medications.csv",
+    ) {
         val allPatients = patientsByMrn.values
         val allMedicationIds = mutableSetOf<String>()
         // allMedicationIds += loadMedicationIDsFromAdministrations(tenant, allPatients)
@@ -41,32 +48,44 @@ class MedicationDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
         logger.info { "Done loading Medications" }
     }
 
-    private fun loadMedicationIDsFromAdministrations(tenant: Tenant, patients: Collection<Patient>): Set<String> {
+    private fun loadMedicationIDsFromAdministrations(
+        tenant: Tenant,
+        patients: Collection<Patient>,
+    ): Set<String> {
         TODO("Only available in Netherlands")
     }
 
-    private fun loadMedicationIDsFromDispenses(tenant: Tenant, patients: Collection<Patient>): Set<String> {
+    private fun loadMedicationIDsFromDispenses(
+        tenant: Tenant,
+        patients: Collection<Patient>,
+    ): Set<String> {
         TODO("Only available in Netherlands")
     }
 
-    private fun loadMedicationIDsFromRequests(tenant: Tenant, patients: Collection<Patient>): Set<String> {
+    private fun loadMedicationIDsFromRequests(
+        tenant: Tenant,
+        patients: Collection<Patient>,
+    ): Set<String> {
         logger.info { "Loading medication requests" }
 
         var totalTime: Long = 0
-        val medicationRequests = patients.flatMapIndexed { index, patient ->
-            val requests: List<MedicationRequest>
-            val executionTime = measureTimeMillis {
-                requests = medicationRequestService.getMedicationRequestsByPatientFHIRId(
-                    tenant,
-                    patient.id!!.value!!
-                )
+        val medicationRequests =
+            patients.flatMapIndexed { index, patient ->
+                val requests: List<MedicationRequest>
+                val executionTime =
+                    measureTimeMillis {
+                        requests =
+                            medicationRequestService.getMedicationRequestsByPatientFHIRId(
+                                tenant,
+                                patient.id!!.value!!,
+                            )
+                    }
+
+                totalTime += executionTime
+                logger.info { "Completed ${index + 1} of ${patients.size}. Last took $executionTime ms. Current average: ${totalTime / (index + 1)}" }
+
+                requests
             }
-
-            totalTime += executionTime
-            logger.info { "Completed ${index + 1} of ${patients.size}. Last took $executionTime ms. Current average: ${totalTime / (index + 1)}" }
-
-            requests
-        }
         logger.info { "Done loading medication statements. Found ${medicationRequests.size}" }
 
         return medicationRequests.mapNotNull {
@@ -80,24 +99,30 @@ class MedicationDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
         }.toSet()
     }
 
-    private fun loadMedicationIDsFromStatements(tenant: Tenant, patients: Collection<Patient>): Set<String> {
+    private fun loadMedicationIDsFromStatements(
+        tenant: Tenant,
+        patients: Collection<Patient>,
+    ): Set<String> {
         logger.info { "Loading medication statements" }
 
         var totalTime: Long = 0
-        val medicationStatements = patients.flatMapIndexed { index, patient ->
-            val statements: List<MedicationStatement>
-            val executionTime = measureTimeMillis {
-                statements = medicationStatementService.getMedicationStatementsByPatientFHIRId(
-                    tenant,
-                    patient.id!!.value!!
-                )
+        val medicationStatements =
+            patients.flatMapIndexed { index, patient ->
+                val statements: List<MedicationStatement>
+                val executionTime =
+                    measureTimeMillis {
+                        statements =
+                            medicationStatementService.getMedicationStatementsByPatientFHIRId(
+                                tenant,
+                                patient.id!!.value!!,
+                            )
+                    }
+
+                totalTime += executionTime
+                logger.info { "Completed ${index + 1} of ${patients.size}. Last took $executionTime ms. Current average: ${totalTime / (index + 1)}" }
+
+                statements
             }
-
-            totalTime += executionTime
-            logger.info { "Completed ${index + 1} of ${patients.size}. Last took $executionTime ms. Current average: ${totalTime / (index + 1)}" }
-
-            statements
-        }
         logger.info { "Done loading medication statements. Found ${medicationStatements.size}" }
 
         return medicationStatements.mapNotNull {
@@ -114,28 +139,33 @@ class MedicationDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
     private fun loadAndWriteMedications(
         tenant: Tenant,
         medicationIds: Set<String>,
-        writer: BufferedWriter
+        writer: BufferedWriter,
     ) {
         var totalTime: Long = 0
 
         val chunks = medicationIds.chunked(25)
         chunks.forEachIndexed { index, ids ->
-            val executionTime = measureTimeMillis {
-                getMedications(tenant, ids).values.forEach { medication ->
-                    writeMedication(medication, writer)
+            val executionTime =
+                measureTimeMillis {
+                    getMedications(tenant, ids).values.forEach { medication ->
+                        writeMedication(medication, writer)
+                    }
+                    writer.flush()
                 }
-                writer.flush()
-            }
 
             totalTime += executionTime
             logger.info { "Completed batch ${index + 1} of ${chunks.size}. Last took $executionTime ms. Current average: ${totalTime / (index + 1)}" }
         }
     }
 
-    private fun getMedications(tenant: Tenant, medicationIds: List<String>): Map<String, Medication> {
-        val run = runCatching {
-            medicationService.getMedicationsByFhirId(tenant, medicationIds).associateBy { it.id!!.value!! }
-        }
+    private fun getMedications(
+        tenant: Tenant,
+        medicationIds: List<String>,
+    ): Map<String, Medication> {
+        val run =
+            runCatching {
+                medicationService.getMedicationsByFhirId(tenant, medicationIds).associateBy { it.id!!.value!! }
+            }
 
         if (run.isFailure) {
             val exception = run.exceptionOrNull()
@@ -147,7 +177,7 @@ class MedicationDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
 
     private fun writeMedication(
         medication: Medication,
-        writer: BufferedWriter
+        writer: BufferedWriter,
     ) {
         val json = JacksonManager.objectMapper.writeValueAsString(medication)
         val escapedJson = StringEscapeUtils.escapeCsv(json)

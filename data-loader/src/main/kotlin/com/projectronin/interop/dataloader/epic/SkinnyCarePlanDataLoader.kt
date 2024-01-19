@@ -17,8 +17,14 @@ import java.io.FileWriter
 class SkinnyCarePlanDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
     private val epicCarePlanService = CarePlanService(epicClient)
     override val jira = "Prior to paradigm change"
+
     override fun main() = TODO("Prior to paradigm change")
-    fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, category: CarePlanCategory) {
+
+    fun load(
+        patientsByMrn: Map<String, Patient>,
+        tenant: Tenant,
+        category: CarePlanCategory,
+    ) {
         logger.info { "Loading care plans for ${category.category}" }
 
         patientsByMrn.map { (mrn, patient) ->
@@ -28,7 +34,7 @@ class SkinnyCarePlanDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
                 BufferedWriter(FileWriter(File("loaded/$mrn-careplans-${category.category}.json"))).use { writer ->
                     writer.write(
                         JacksonManager.objectMapper.writerWithDefaultPrettyPrinter()
-                            .writeValueAsString(carePlans)
+                            .writeValueAsString(carePlans),
                     )
                 }
             }

@@ -18,9 +18,10 @@ fun main() {
 
     println("Total patients: ${collection.find().count()}")
 
-    val newPatient = rcdmPatient("sodatest") {
-        identifier.generates(6)
-    }
+    val newPatient =
+        rcdmPatient("sodatest") {
+            identifier.generates(6)
+        }
     println("Inserting new patient: $newPatient")
     demo.insertData(newPatient, collection)
 
@@ -42,6 +43,7 @@ fun main() {
     println("SQL Lookup found $sqlResult")
 }
 
+@Suppress("ktlint:standard:max-line-length")
 class SodaDemo {
     private val connection: Connection
     private val database: OracleDatabase
@@ -58,29 +60,42 @@ class SodaDemo {
         props.setProperty("password", "Longpassword1")
 
         connection = DriverManager.getConnection(url, props)
-        database = run {
-            val client = OracleRDBMSClient()
-            client.getDatabase(connection)
-        }
+        database =
+            run {
+                val client = OracleRDBMSClient()
+                client.getDatabase(connection)
+            }
     }
 
     fun getCollection(name: String): OracleCollection = database.admin().createCollection(name)
 
-    fun insertData(data: Any, collection: OracleCollection) {
+    fun insertData(
+        data: Any,
+        collection: OracleCollection,
+    ) {
         val document = database.createDocumentFrom(JacksonManager.objectMapper.writeValueAsString(data))
         collection.insert(document)
     }
 
-    fun queryForOne(query: String, collection: OracleCollection): OracleDocument {
+    fun queryForOne(
+        query: String,
+        collection: OracleCollection,
+    ): OracleDocument {
         println(query)
         return collection.find().filter(query).one
     }
 
-    fun query(query: String, collection: OracleCollection): List<OracleDocument> {
+    fun query(
+        query: String,
+        collection: OracleCollection,
+    ): List<OracleDocument> {
         return collection.find().filter(query).all()
     }
 
-    fun sqlFindById(id: String, collection: String): String? {
+    fun sqlFindById(
+        id: String,
+        collection: String,
+    ): String? {
         return connection.prepareStatement("SELECT json_serialize(c.json_document) FROM $collection c WHERE c.json_document.id = :1")
             .use { preparedStatement ->
                 preparedStatement.setString(1, id)

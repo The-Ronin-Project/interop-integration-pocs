@@ -24,20 +24,22 @@ class AppointmentService(epicClient: EpicClient) : BaseEpicService<Appointment>(
         tenant: Tenant,
         departmentIdentifier: Identifier,
         minusDays: Int = 1,
-        plusDays: Int = 1
+        plusDays: Int = 1,
     ): List<EpicAppointment> {
         val startDate = LocalDate.now().minusDays(minusDays.toLong())
         val endDate = LocalDate.now().plusDays(plusDays.toLong())
-        val request = GetProviderAppointmentRequest(
-            userID = tenant.vendorAs<Epic>().ehrUserId,
-            departments = listOf(IDType(id = departmentIdentifier.value!!.value!!, type = "External")),
-            startDate = dateFormat.format(startDate),
-            endDate = dateFormat.format(endDate)
-        )
-        val res = runBlocking {
-            val httpResponse = epicClient.post(tenant, urlPart, request)
-            httpResponse.body<GetAppointmentsResponse>()
-        }
+        val request =
+            GetProviderAppointmentRequest(
+                userID = tenant.vendorAs<Epic>().ehrUserId,
+                departments = listOf(IDType(id = departmentIdentifier.value!!.value!!, type = "External")),
+                startDate = dateFormat.format(startDate),
+                endDate = dateFormat.format(endDate),
+            )
+        val res =
+            runBlocking {
+                val httpResponse = epicClient.post(tenant, urlPart, request)
+                httpResponse.body<GetAppointmentsResponse>()
+            }
         return res.appointments ?: emptyList()
     }
 }

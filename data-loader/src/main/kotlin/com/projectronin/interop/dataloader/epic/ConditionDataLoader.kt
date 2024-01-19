@@ -11,13 +11,15 @@ import java.nio.file.Paths
 import kotlin.io.path.createDirectory
 import kotlin.system.measureTimeMillis
 
+@Suppress("ktlint:standard:max-line-length")
 class ConditionDataLoader(
-    epicClient: EpicClient
+    epicClient: EpicClient,
 ) : BaseEpicDataLoader() {
     private val conditionService = EpicConditionService(epicClient)
     private val observationService = ObservationViaConditionService(epicClient)
     private val resourceType = "conditions"
     override val jira = "Prior to paradigm change"
+
     override fun main() = TODO("Prior to paradigm change")
 
     /**
@@ -30,7 +32,7 @@ class ConditionDataLoader(
         patientsByMrn: Map<String, Patient>,
         tenant: Tenant,
         timeStamp: String = System.currentTimeMillis().toString(),
-        loadObservations: Boolean = false
+        loadObservations: Boolean = false,
     ) {
         logger.info { "Loading conditions" }
 
@@ -38,34 +40,37 @@ class ConditionDataLoader(
         patientsByMrn.entries.forEachIndexed { index, (mrn, patient) ->
             val totalConditions = mutableListOf<Condition>()
 
-            val executionTime = measureTimeMillis {
-                val run = runCatching {
-                    totalConditions.addAll(
-                        loadConditions(patient, tenant, "encounter-diagnosis", mrn)
-                    )
-                    totalConditions.addAll(
-                        loadConditions(patient, tenant, "problem-list-item", mrn)
-                    )
-                }
-
-                if (run.isFailure) {
-                    val exception = run.exceptionOrNull()
-                    logger.error(exception) { "Error processing $mrn: ${exception?.message}" }
-                }
-
-                writeAndUploadConditions(tenant, mrn, totalConditions, timeStamp)
-
-                if (loadObservations) {
-                    val totalObservations = totalConditions
-                        .filter { condition ->
-                            condition.stage.any { it.assessment.isNotEmpty() }
+            val executionTime =
+                measureTimeMillis {
+                    val run =
+                        runCatching {
+                            totalConditions.addAll(
+                                loadConditions(patient, tenant, "encounter-diagnosis", mrn),
+                            )
+                            totalConditions.addAll(
+                                loadConditions(patient, tenant, "problem-list-item", mrn),
+                            )
                         }
-                        .map { condition ->
-                            loadObservations(tenant, condition.id!!.value!!)
-                        }.flatten()
-                    writeAndUploadObservations(tenant, mrn, totalObservations, timeStamp)
+
+                    if (run.isFailure) {
+                        val exception = run.exceptionOrNull()
+                        logger.error(exception) { "Error processing $mrn: ${exception?.message}" }
+                    }
+
+                    writeAndUploadConditions(tenant, mrn, totalConditions, timeStamp)
+
+                    if (loadObservations) {
+                        val totalObservations =
+                            totalConditions
+                                .filter { condition ->
+                                    condition.stage.any { it.assessment.isNotEmpty() }
+                                }
+                                .map { condition ->
+                                    loadObservations(tenant, condition.id!!.value!!)
+                                }.flatten()
+                        writeAndUploadObservations(tenant, mrn, totalObservations, timeStamp)
+                    }
                 }
-            }
 
             totalTime += executionTime
             logger.info { "Completed ${index + 1} of ${patientsByMrn.size}. Last took $executionTime ms. Current average: ${totalTime / (index + 1)}" }
@@ -78,7 +83,7 @@ class ConditionDataLoader(
         patient: Patient,
         tenant: Tenant,
         category: String,
-        mrn: String
+        mrn: String,
     ): List<Condition> {
         logger.info { "Searching for $category for mrn $mrn" }
         val conditions = conditionService.findConditions(tenant, patient.id!!.value!!, category, "active")
@@ -86,14 +91,22 @@ class ConditionDataLoader(
         return conditions
     }
 
-    private fun loadObservations(tenant: Tenant, conditionId: String): List<Observation> {
+    private fun loadObservations(
+        tenant: Tenant,
+        conditionId: String,
+    ): List<Observation> {
         logger.info { "Searching for observations referenced in condition $conditionId" }
         val observations = observationService.findObservationsByCondition(tenant, conditionId)
         logger.info { "${observations.size} observations found for $conditionId" }
         return observations
     }
 
-    private fun writeAndUploadConditions(tenant: Tenant, mrn: String, conditions: List<Condition>, timeStamp: String) {
+    private fun writeAndUploadConditions(
+        tenant: Tenant,
+        mrn: String,
+        conditions: List<Condition>,
+        timeStamp: String,
+    ) {
         if (conditions.isEmpty()) return
 
         val fileDirectory = "loaded/$resourceType"
@@ -105,7 +118,12 @@ class ConditionDataLoader(
         uploadFile(fileName, tenant, resourceType, timeStamp)
     }
 
-    private fun writeAndUploadObservations(tenant: Tenant, mrn: String, observations: List<Observation>, timeStamp: String) {
+    private fun writeAndUploadObservations(
+        tenant: Tenant,
+        mrn: String,
+        observations: List<Observation>,
+        timeStamp: String,
+    ) {
         if (observations.isEmpty()) return
 
         val fileDirectory = "loaded/observations_from_conditions_stage"

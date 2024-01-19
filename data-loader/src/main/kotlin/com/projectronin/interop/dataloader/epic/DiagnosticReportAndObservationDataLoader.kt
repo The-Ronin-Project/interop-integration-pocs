@@ -21,29 +21,33 @@ import kotlin.system.measureTimeMillis
     often, so switched to pulling them in separate queries.  This makes things take MUCH longer, but it works.  There
     aren't any more failures, but we average about 8 minutes per patient.
  */
+@Suppress("ktlint:standard:max-line-length")
 class DiagnosticReportAndObservationDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
     private val diagnosticReportService = DiagnosticReportBundleService(epicClient)
     private val observationService = ObservationBundleService(epicClient)
     override val jira = "Prior to paradigm change"
+
     override fun main() = TODO("Prior to paradigm change")
 
     fun load(
         patientsByMrn: Map<String, Patient>,
-        tenant: Tenant
+        tenant: Tenant,
     ) {
         logger.info { "Loading diagnostic reports" }
         var totalTime: Long = 0
         patientsByMrn.entries.forEachIndexed { index, (mrn, patient) ->
-            val executionTime = measureTimeMillis {
-                val run = runCatching {
-                    loadAndWriteDiagnosticReports(patient, tenant, mrn)
-                }
+            val executionTime =
+                measureTimeMillis {
+                    val run =
+                        runCatching {
+                            loadAndWriteDiagnosticReports(patient, tenant, mrn)
+                        }
 
-                if (run.isFailure) {
-                    val exception = run.exceptionOrNull()
-                    logger.error(exception) { "Error processing $mrn: ${exception?.message}" }
+                    if (run.isFailure) {
+                        val exception = run.exceptionOrNull()
+                        logger.error(exception) { "Error processing $mrn: ${exception?.message}" }
+                    }
                 }
-            }
 
             totalTime += executionTime
             logger.info { "Completed ${index + 1} of ${patientsByMrn.size}. Last took $executionTime ms. Current average: ${totalTime / (index + 1)}" }
@@ -54,11 +58,12 @@ class DiagnosticReportAndObservationDataLoader(epicClient: EpicClient) : BaseEpi
     private fun loadAndWriteDiagnosticReports(
         patient: Patient,
         tenant: Tenant,
-        mrn: String
+        mrn: String,
     ) {
         logger.info { "Getting DxReports for patient $mrn" }
         val bundle = diagnosticReportService.getDiagnosticReportsByPatient(tenant, patient.id!!.value!!)
-        val dxReportsCount = bundle.entry.mapNotNull { it.resource }.filterIsInstance(DiagnosticReport::class.java).count()
+        val dxReportsCount =
+            bundle.entry.mapNotNull { it.resource }.filterIsInstance(DiagnosticReport::class.java).count()
 
         val observationBundles = mutableListOf<Bundle>()
 
@@ -71,14 +76,15 @@ class DiagnosticReportAndObservationDataLoader(epicClient: EpicClient) : BaseEpi
 
                 dxReport.result.filter { it.decomposedType() == "Observation" }.forEach { reference ->
                     observationBundles.add(
-                        observationService.getObservationBundle(tenant, reference.decomposedId()!!)
+                        observationService.getObservationBundle(tenant, reference.decomposedId()!!),
                     )
                 }
             }
 
-        val json = JacksonManager.objectMapper.writeValueAsString(
-            observationService.mergeResponses(listOf(bundle) + observationBundles)
-        )
+        val json =
+            JacksonManager.objectMapper.writeValueAsString(
+                observationService.mergeResponses(listOf(bundle) + observationBundles),
+            )
 
         BufferedWriter(FileWriter(File("loaded/$mrn.json"))).use { writer ->
             writer.write(json)

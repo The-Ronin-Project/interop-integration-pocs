@@ -42,12 +42,13 @@ class AdmitService {
 
     private fun getTenant(message: Message): Int? {
         val msh = message.get("MSH")
-        val hl7FacilityId = if (msh is MSH) {
-            msh.sendingFacility.namespaceID.value
-        } else {
-            val messageType = (msh as GenericSegment).getField(4)[0] as Varies
-            Terser.getPrimitive(messageType.data, 1, 1).value
-        }
+        val hl7FacilityId =
+            if (msh is MSH) {
+                msh.sendingFacility.namespaceID.value
+            } else {
+                val messageType = (msh as GenericSegment).getField(4)[0] as Varies
+                Terser.getPrimitive(messageType.data, 1, 1).value
+            }
 
         return when (hl7FacilityId) {
             "1" -> 1001
@@ -57,7 +58,10 @@ class AdmitService {
         }
     }
 
-    private fun process(input: ADT_A01, tenant: Int): String {
+    private fun process(
+        input: ADT_A01,
+        tenant: Int,
+    ): String {
         val pid = input.pid
         val patient = createPatient(pid, tenant)
 
@@ -67,7 +71,10 @@ class AdmitService {
         return jsonPatient
     }
 
-    private fun createPatient(pid: PID, tenant: Int): Patient {
+    private fun createPatient(
+        pid: PID,
+        tenant: Int,
+    ): Patient {
         val patient = Patient()
         with(patient) {
             identifier = createIdentifiers(pid, tenant)
@@ -77,7 +84,10 @@ class AdmitService {
         return patient
     }
 
-    private fun createIdentifiers(pid: PID, tenant: Int): List<Identifier> {
+    private fun createIdentifiers(
+        pid: PID,
+        tenant: Int,
+    ): List<Identifier> {
         val identifiers = mutableListOf<Identifier>()
 
         for (patientIdentifier in pid.patientIdentifierList) {

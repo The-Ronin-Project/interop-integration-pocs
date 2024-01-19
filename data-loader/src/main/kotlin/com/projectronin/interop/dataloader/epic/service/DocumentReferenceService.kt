@@ -8,11 +8,16 @@ class DocumentReferenceService(epicClient: EpicClient) : BaseEpicService<Documen
     override val fhirURLSearchPart = "/api/FHIR/R4/DocumentReference"
     override val fhirResourceType = DocumentReference::class.java
 
-    fun getDocumentReferences(tenant: Tenant, patientFhirId: String, category: String? = null): List<DocumentReference> {
-        val parameters = buildMap {
-            put("patient", patientFhirId)
-            category?.let { put("category", category) }
-        }
+    fun getDocumentReferences(
+        tenant: Tenant,
+        patientFhirId: String,
+        category: String? = null,
+    ): List<DocumentReference> {
+        val parameters =
+            buildMap {
+                put("patient", patientFhirId)
+                category?.let { put("category", category) }
+            }
 
         return getResourceListFromSearch(tenant, parameters)
     }

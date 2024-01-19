@@ -8,10 +8,14 @@ class DiagnosticReportBundleService(epicClient: EpicClient) : BaseEpicService<Bu
     override val fhirURLSearchPart = "/api/FHIR/R4/DiagnosticReport"
     override val fhirResourceType = Bundle::class.java
 
-    fun getDiagnosticReportsByPatient(tenant: Tenant, patientFhirId: String): Bundle {
-        val parameters = mapOf(
-            "patient" to patientFhirId
-        )
+    fun getDiagnosticReportsByPatient(
+        tenant: Tenant,
+        patientFhirId: String,
+    ): Bundle {
+        val parameters =
+            mapOf(
+                "patient" to patientFhirId,
+            )
         return getBundleWithPaging(tenant, parameters)
     }
 }

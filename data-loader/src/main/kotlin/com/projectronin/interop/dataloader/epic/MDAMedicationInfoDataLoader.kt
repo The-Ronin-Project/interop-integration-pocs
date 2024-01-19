@@ -23,6 +23,7 @@ class MDAMedicationInfoDataLoader : BaseEpicDataLoader() {
     private val medicationRequestService = EpicMedicationRequestService(epicClient)
     private val medicationStatementService = EpicMedicationStatementService(epicClient)
     private val medicationService = EpicMedicationService(epicClient, batchSize = 5)
+
     override fun main() {
         val patientsByMrn = getPatientsForMRNs()
         val timeStamp = System.currentTimeMillis().toString()
@@ -39,51 +40,57 @@ class MDAMedicationInfoDataLoader : BaseEpicDataLoader() {
             val mrn = entry.key
             val fhirId = patient.id?.value!!
             logger.info { "Loading Medications for $mrn" }
-            val run = runCatching {
-                // discover medication references from patients
-                val requests = medicationRequestService.getMedicationRequestByPatient(
-                    tenant,
-                    fhirId
-                )
-                totalMedRequests[fhirId] = requests
-                logger.info { "Found ${requests.size} requests" }
-                val statements = medicationStatementService.getMedicationStatementsByPatientFHIRId(
-                    tenant,
-                    fhirId
-                )
-                totalMedStatements[fhirId] = statements
-                logger.info { "Found ${statements.size} statements" }
-                val medicationIdFromStatements = statements.mapNotNull {
-                    val medication = it.medication!!
-                    if (medication.type == DynamicValueType.REFERENCE) {
-                        (medication.value as Reference).decomposedId()
-                    } else {
-                        logger.info { "MedicationStatement had medication of type ${medication.type}" }
-                        null
-                    }
+            val run =
+                runCatching {
+                    // discover medication references from patients
+                    val requests =
+                        medicationRequestService.getMedicationRequestByPatient(
+                            tenant,
+                            fhirId,
+                        )
+                    totalMedRequests[fhirId] = requests
+                    logger.info { "Found ${requests.size} requests" }
+                    val statements =
+                        medicationStatementService.getMedicationStatementsByPatientFHIRId(
+                            tenant,
+                            fhirId,
+                        )
+                    totalMedStatements[fhirId] = statements
+                    logger.info { "Found ${statements.size} statements" }
+                    val medicationIdFromStatements =
+                        statements.mapNotNull {
+                            val medication = it.medication!!
+                            if (medication.type == DynamicValueType.REFERENCE) {
+                                (medication.value as Reference).decomposedId()
+                            } else {
+                                logger.info { "MedicationStatement had medication of type ${medication.type}" }
+                                null
+                            }
+                        }
+                    val medicationIdFromRequests =
+                        requests.mapNotNull {
+                            val medication = it.medication!!
+                            if (medication.type == DynamicValueType.REFERENCE) {
+                                (medication.value as Reference).decomposedId()
+                            } else {
+                                logger.info { "MedicationRequest had medication of type ${medication.type}" }
+                                null
+                            }
+                        }
+                    val allMedicationIds = (medicationIdFromStatements + medicationIdFromRequests).distinct()
+                    logger.info { "Found ${allMedicationIds.size} Medication IDs" }
+                    val newMedicationsIds = allMedicationIds - totalMedicationIds
+                    logger.info { "Of which ${newMedicationsIds.size} are new" }
+                    logger.info { "Searching for Medications" }
+                    val medications =
+                        medicationService.getMedicationsByFhirId(
+                            tenant = tenant,
+                            newMedicationsIds,
+                        )
+                    totalMedicationIds.addAll(newMedicationsIds)
+                    logger.info { "Found ${medications.size} Medications" }
+                    totalMedications.addAll(medications)
                 }
-                val medicationIdFromRequests = requests.mapNotNull {
-                    val medication = it.medication!!
-                    if (medication.type == DynamicValueType.REFERENCE) {
-                        (medication.value as Reference).decomposedId()
-                    } else {
-                        logger.info { "MedicationRequest had medication of type ${medication.type}" }
-                        null
-                    }
-                }
-                val allMedicationIds = (medicationIdFromStatements + medicationIdFromRequests).distinct()
-                logger.info { "Found ${allMedicationIds.size} Medication IDs" }
-                val newMedicationsIds = allMedicationIds - totalMedicationIds
-                logger.info { "Of which ${newMedicationsIds.size} are new" }
-                logger.info { "Searching for Medications" }
-                val medications = medicationService.getMedicationsByFhirId(
-                    tenant = tenant,
-                    newMedicationsIds
-                )
-                totalMedicationIds.addAll(newMedicationsIds)
-                logger.info { "Found ${medications.size} Medications" }
-                totalMedications.addAll(medications)
-            }
 
             if (run.isFailure) {
                 val exception = run.exceptionOrNull()
@@ -99,10 +106,11 @@ class MDAMedicationInfoDataLoader : BaseEpicDataLoader() {
             logger.info { "Starting to resolve references on loop $count" }
             val newIngredientIds = getNewReferences(totalMedications, totalMedicationIds)
             logger.info { "Found ${newIngredientIds.size} new ingredients" }
-            val newMedications = medicationService.getMedicationsByFhirId(
-                tenant = tenant,
-                newIngredientIds
-            )
+            val newMedications =
+                medicationService.getMedicationsByFhirId(
+                    tenant = tenant,
+                    newIngredientIds,
+                )
             totalMedicationIds.addAll(newIngredientIds)
             totalMedications.addAll(newMedications)
             logger.info { "There are currently ${totalMedicationIds.size} medications" }
@@ -128,26 +136,31 @@ class MDAMedicationInfoDataLoader : BaseEpicDataLoader() {
         logger.info { "Done loading Medications" }
     }
 
-    private fun getNewReferences(medications: List<Medication>, foundIds: List<String>): List<String> {
-        val allIngredients = medications.map {
-            val ingredients = it.ingredient
-            ingredients.mapNotNull {
-                if (it.item?.type == DynamicValueType.REFERENCE) {
-                    val reference = it.item?.value as Reference
-                    if (reference.decomposedType() == "Medication") {
-                        reference.decomposedId()!!
+    private fun getNewReferences(
+        medications: List<Medication>,
+        foundIds: List<String>,
+    ): List<String> {
+        val allIngredients =
+            medications.map {
+                val ingredients = it.ingredient
+                ingredients.mapNotNull {
+                    if (it.item?.type == DynamicValueType.REFERENCE) {
+                        val reference = it.item?.value as Reference
+                        if (reference.decomposedType() == "Medication") {
+                            reference.decomposedId()!!
+                        } else {
+                            null
+                        }
                     } else {
                         null
                     }
-                } else {
-                    null
                 }
-            }
-        }.flatten()
+            }.flatten()
         logger.info { "There are ${allIngredients.size} ingredient references" }
-        val newIngredients = allIngredients.filter {
-            !foundIds.contains(it)
-        }
+        val newIngredients =
+            allIngredients.filter {
+                !foundIds.contains(it)
+            }
         logger.info { "Of which ${newIngredients.size} are new" }
         return newIngredients
     }

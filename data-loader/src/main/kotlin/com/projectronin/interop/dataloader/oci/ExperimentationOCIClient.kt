@@ -12,17 +12,17 @@ class ExperimentationOCIClient(
     privateKey: String,
     namespace: String,
     regionId: String,
-    private val experimentationBucket: String = "prod-experimentation"
+    private val experimentationBucket: String = "prod-experimentation",
 ) : OCIClient(
-    tenancyOCID = tenancyOCID,
-    userOCID = userOCID,
-    fingerPrint = fingerPrint,
-    privateKey = privateKey,
-    namespace = namespace,
-    infxBucket = "",
-    datalakeBucket = "",
-    regionId = regionId
-) {
+        tenancyOCID = tenancyOCID,
+        userOCID = userOCID,
+        fingerPrint = fingerPrint,
+        privateKey = privateKey,
+        namespace = namespace,
+        infxBucket = "",
+        datalakeBucket = "",
+        regionId = regionId,
+    ) {
     private val logger = KotlinLogging.logger { }
 
     companion object {
@@ -40,7 +40,7 @@ class ExperimentationOCIClient(
                 fingerPrint = fingerPrint,
                 privateKey = privateKey,
                 namespace = namespace,
-                regionId = regionId
+                regionId = regionId,
             )
         }
     }
@@ -54,7 +54,12 @@ class ExperimentationOCIClient(
      * Multiple files belonging to the same extract should be uploaded with the same timestamp, as that is what will
      * be used to group them by DP.
      */
-    fun uploadExport(tenant: Tenant, resourceType: String, fileName: String, timeStamp: String): Boolean {
+    fun uploadExport(
+        tenant: Tenant,
+        resourceType: String,
+        fileName: String,
+        timeStamp: String,
+    ): Boolean {
         val fileNameOut = fileName.substringAfterLast('/', fileName)
         val fileNameToUpload =
             "${tenant.name.lowercase()}_data_exploration/${resourceType.lowercase()}/$timeStamp/$fileNameOut".replace(":", "-")

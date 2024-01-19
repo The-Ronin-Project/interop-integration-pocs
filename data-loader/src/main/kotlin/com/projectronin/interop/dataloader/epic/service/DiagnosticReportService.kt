@@ -8,7 +8,10 @@ class DiagnosticReportService(epicClient: EpicClient) : BaseEpicService<Diagnost
     override val fhirURLSearchPart = "/api/FHIR/R4/DiagnosticReport"
     override val fhirResourceType = DiagnosticReport::class.java
 
-    fun getDiagnosticReportsByPatient(tenant: Tenant, patientFhirId: String): List<DiagnosticReport> {
+    fun getDiagnosticReportsByPatient(
+        tenant: Tenant,
+        patientFhirId: String,
+    ): List<DiagnosticReport> {
         val parameters = mapOf("patient" to patientFhirId)
         return getResourceListFromSearch(tenant, parameters)
     }

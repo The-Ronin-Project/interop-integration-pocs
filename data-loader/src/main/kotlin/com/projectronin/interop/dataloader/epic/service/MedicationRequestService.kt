@@ -11,7 +11,7 @@ class MedicationRequestService(epicClient: EpicClient) :
 
     fun getMedicationRequestsByPatientFHIRId(
         tenant: Tenant,
-        patientFHIRId: String
+        patientFHIRId: String,
     ): List<MedicationRequest> {
         val parameters = mapOf("patient" to patientFHIRId)
         return getResourceListFromSearch(tenant, parameters)

@@ -17,8 +17,14 @@ import java.io.FileWriter
 class SkinnyDiagnosticReportDataLoader(epicClient: EpicClient) : BaseEpicDataLoader() {
     private val epicDiagnosticReportService = DiagnosticReportService(epicClient)
     override val jira = "Prior to paradigm change"
+
     override fun main() = TODO("Prior to paradigm change")
-    fun load(patientsByMrn: Map<String, Patient>, tenant: Tenant, timeStamp: String) {
+
+    fun load(
+        patientsByMrn: Map<String, Patient>,
+        tenant: Tenant,
+        timeStamp: String,
+    ) {
         logger.info { "Loading dx reports" }
 
         patientsByMrn.entries.mapIndexed { index, (mrn, patient) ->
@@ -30,7 +36,7 @@ class SkinnyDiagnosticReportDataLoader(epicClient: EpicClient) : BaseEpicDataLoa
             if (dxReports.isNotEmpty()) {
                 BufferedWriter(FileWriter(File(fileName))).use { writer ->
                     writer.write(
-                        JacksonManager.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(dxReports)
+                        JacksonManager.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(dxReports),
                     )
                 }
 

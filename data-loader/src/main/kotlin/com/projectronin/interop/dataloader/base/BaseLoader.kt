@@ -36,11 +36,14 @@ abstract class BaseLoader() {
      * of FHIR resources, but they don't have to be.
      */
     @Deprecated("just use writeAndUploadResources")
-    fun writeFile(fileName: String, resources: List<Any>) {
+    fun writeFile(
+        fileName: String,
+        resources: List<Any>,
+    ) {
         if (resources.isNotEmpty()) {
             BufferedWriter(FileWriter(File(fileName))).use { writer ->
                 writer.write(
-                    JacksonManager.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(resources)
+                    JacksonManager.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(resources),
                 )
                 writer.close()
             }
@@ -51,15 +54,19 @@ abstract class BaseLoader() {
      * Uploads [fileName] to OCI under the [resourceType] and [timeStamp] folders.  Returns true if successful.
      */
     @Deprecated("just use writeAndUploadResources")
-    fun uploadFile(fileName: String, tenant: Tenant, resourceType: String, timeStamp: String) =
-        expOCIClient.uploadExport(tenant, resourceType, fileName, timeStamp)
+    fun uploadFile(
+        fileName: String,
+        tenant: Tenant,
+        resourceType: String,
+        timeStamp: String,
+    ) = expOCIClient.uploadExport(tenant, resourceType, fileName, timeStamp)
 
     fun <T : Resource<*>> writeAndUploadResources(
         tenant: Tenant,
         fileName: String,
         resources: List<T>,
         timeStamp: String,
-        dryRun: Boolean = true
+        dryRun: Boolean = true,
     ) {
         if (resources.isEmpty()) return
         val resourceType = resources.first().resourceType.lowercase()
@@ -71,7 +78,7 @@ abstract class BaseLoader() {
         // logger.info { "Writing $pathName" }
         BufferedWriter(FileWriter(File(pathName))).use { writer ->
             writer.write(
-                JacksonManager.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(resources)
+                JacksonManager.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(resources),
             )
             writer.close()
         }
@@ -83,14 +90,18 @@ abstract class BaseLoader() {
         }
     }
 
-    fun uploadString(tenant: Tenant, fileName: String, data: String, timeStamp: String) {
+    fun uploadString(
+        tenant: Tenant,
+        fileName: String,
+        data: String,
+        timeStamp: String,
+    ) {
     }
 
     abstract fun main()
 
     // Often times we're getting MRNs, this is a way to
-    protected fun getMRNs(): Set<String> =
-        this.javaClass.getResource("/mrns.txt")!!.readText().split("\r\n", "\n").toSet()
+    protected fun getMRNs(): Set<String> = this.javaClass.getResource("/mrns.txt")!!.readText().split("\r\n", "\n").toSet()
 
     protected abstract fun getPatientsForMRNs(mrns: Set<String> = getMRNs()): Map<String, Patient>
 }

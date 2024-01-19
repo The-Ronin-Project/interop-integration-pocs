@@ -10,7 +10,10 @@ class LocationService(epicClient: EpicClient) :
     override val fhirURLSearchPart = "/api/FHIR/R4/Location"
     override val fhirResourceType = Location::class.java
 
-    fun getDepartmentIdentifierFromFhirID(tenant: Tenant, fhirID: String): Identifier? {
+    fun getDepartmentIdentifierFromFhirID(
+        tenant: Tenant,
+        fhirID: String,
+    ): Identifier? {
         val location = getByID(tenant, fhirID)
         return location.identifier.firstOrNull()
     }
