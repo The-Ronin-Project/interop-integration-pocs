@@ -1,5 +1,25 @@
 # Autonomous JSON Database Demo
 
+## M1/M2 Pre-steps
+
+Use brew and software update to install all the required emulation (probably already have docker and docker-compose).
+
+```shell
+brew install docker
+brew install docker-compose
+brew install colima
+
+softwareupdate --install-rosetta
+```
+
+Start the compatible VM with x86_64 using
+
+```shell
+colima start --cpu 4 --memory 16 --arch x86_64 --vm-type vz --vz-rosetta
+```
+
+Now move on to normal local set up.
+
 ## Setup Local DB
 
 First install the latest image
@@ -19,7 +39,6 @@ docker run -d \
 -e WORKLOAD_TYPE='ATP' \
 -e WALLET_PASSWORD=Longpassword1 \
 -e ADMIN_PASSWORD=Longpassword1 \
--v /tmp/tls_wallet:/u01/app/oracle/wallets/tls_wallet \
 --hostname localhost \
 --cap-add SYS_ADMIN \
 --device /dev/fuse \
@@ -34,8 +53,10 @@ using a wallet, everything is already configured to run locally. If you are not 
 in your Java keystore (the first command will cleanup any prior instances):
 
 ```shell
-sudo keytool -delete -alias adb_container_certificate -cacerts
-sudo keytool -import -alias adb_container_certificate -cacerts -file /tmp/tls_wallet/adb_container.cert
+docker cp <CONTAINER_ID>:u01/app/oracle/wallets/tls_wallet/adb_container.cert /tmp/tls_wallet/adb_container.cert
+
+keytool -delete -alias adb_container_certificate -cacerts
+keytool -import -alias adb_container_certificate -cacerts -file /tmp/tls_wallet/adb_container.cert
 ```
 
 ## Demo
