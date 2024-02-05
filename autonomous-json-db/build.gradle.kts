@@ -5,6 +5,8 @@ plugins {
 dependencies {
     implementation(libs.soda)
     implementation(libs.interop.ehr.ronin.generators)
+    runtimeOnly(libs.liquibase.core)
+    implementation(libs.interop.ehr.liquibase)
     implementation(libs.ronin.test.data.generator)
     implementation(libs.interop.common.jackson)
     implementation(libs.interop.fhir)

@@ -7,6 +7,8 @@ interop-ehr = "10.8.2"
 interop-fhir = "8.8.1"
 interop-gradle = "4.0.2"
 interop-validation = "3.0.0"
+liquibase = "4.25.1"
+
 mockk = "1.13.7"
 oracle-db = "21.1.0.0"
 ronin-test = "0.2.0"
@@ -25,9 +27,11 @@ interop-ehr-cerner = { module = "com.projectronin.interop.ehr:interop-ehr-cerner
 interop-ehr-epic = { module = "com.projectronin.interop.ehr:interop-ehr-epic", version.ref = "interop-ehr" }
 interop-ehr-ronin-generators = { module = "com.projectronin.interop.ehr:interop-fhir-ronin-generators", version.ref = "interop-ehr" }
 interop-ehr-tenant = { module = "com.projectronin.interop.ehr:interop-tenant", version.ref = "interop-ehr" }
+interop-ehr-liquibase = { module = "com.projectronin.interop.ehr:interop-ehr-liquibase", version.ref = "interop-ehr" }
 interop-fhir = { module = "com.projectronin.interop.fhir:interop-fhir", version.ref = "interop-fhir" }
 interop-fhirGenerators = { module = "com.projectronin.interop.fhir:interop-fhir-generators", version.ref = "interop-fhir" }
 interop-validation-client = { module = "com.projectronin.interop.validation:interop-validation-client", version.ref = "interop-validation" }
+liquibase-core = { module = "org.liquibase:liquibase-core", version.ref = "liquibase" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 ojdbc = { module = "com.oracle.database.jdbc:ojdbc8", version.ref = "oracle-db" }
 oraclepki = { module = "com.oracle.database.security:oraclepki", version.ref = "oracle-db" }
